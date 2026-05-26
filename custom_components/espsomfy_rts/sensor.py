@@ -14,7 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    SIGNAL_STRENGTH_DECIBELS_MILLIWATTS,
+    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfDataRate,
     UnitOfInformation,
 )
@@ -337,7 +337,7 @@ class ESPSomfyWifiStrengthSensor(ESPSomfyDiagSensor):
                 has_entity_name=True,
                 device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                 entity_category=EntityCategory.DIAGNOSTIC,
-                unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATTS,
+                unit_of_measurement="dBm",
                 state_class=SensorStateClass.MEASUREMENT,
                 icon="mdi:wifi",
                 min_interval=30,
