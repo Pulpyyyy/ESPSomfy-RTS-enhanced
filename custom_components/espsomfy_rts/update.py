@@ -152,5 +152,11 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
             if version is not None:
                 await self.controller.update_firmware(version)
                 
-                
+    async def async_release_notes(self) -> str | None:
+        """Return the release notes from GitHub."""
+        if (version := self.latest_version) is None:
+            return None
+
+        # On appelle directement la fonction créée dans controller.py
+        return await self._controller.fetch_release_notes(version)
                 

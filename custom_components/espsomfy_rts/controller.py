@@ -920,7 +920,7 @@ class ESPSomfyAPI:
     async def fetch_release_notes(self, version: str) -> str | None:
         """Télécharge les notes de version depuis l'API GitHub."""
         # Note : Si tu utilises ton propre fork, remplace rstrouse par ton pseudo GitHub
-        url = f"https://api.github.com/repos/xkain/TESTRTS/releases/tags/{version}"
+        url = f"https://api.github.com/repos/xkain/ESPSomfy-RTS/releases/tags/{version}"
         headers = {"Accept": "application/vnd.github.v3+json"}
         
         try:
