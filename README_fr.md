@@ -1,9 +1,8 @@
 <div align="center">
 
-[![GitHub Release](https://img.shields.io/github/release/xkain/ESPSomfy-RTS-HA.svg?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA/releases) [![GitHub Activity](https://img.shields.io/github/last-commit/xkain/ESPSomfy-RTS-HA/main?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA/commits/main) [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![GitHub Release](https://img.shields.io/github/release/xkain/ESPSomfy-RTS-HA.svg?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA/releases) [![GitHub Activity](https://img.shields.io/github/last-commit/xkain/ESPSomfy-RTS-HA?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA/commits/main) [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 <br />
-
-[![License](https://img.shields.io/github/license/xkain/ESPSomfy-RTS-HA.svg?style=for-the-badge)](LICENSE) [![Project Maintenance](https://img.shields.io/badge/maintainer-xkain-blue.svg?style=for-the-badge)](https://github.com/xkain) [![Github](https://img.shields.io/github/followers/xkain.svg?style=for-the-badge)](https://github.com/xkain)
+[![License](https://img.shields.io/github/license/xkain/ESPSomfy-RTS-HA.svg?style=for-the-badge)](LICENSE) [![Project Maintenance](https://img.shields.io/badge/maintainer-xkain-blue.svg?style=for-the-badge)](https://github.com/xkain) [![Github](https://img.shields.io/github/followers/xkain?style=for-the-badge)](https://github.com/xkain)
 
 <br />
 
@@ -19,7 +18,7 @@
 <br />
 <br />
 
-Une intégration Home Assistant personnalisée (Fork) permettant de contrôler et de suivre précisément vos équipements (volets roulants, stores, porte de garage, portail et autres équipements utilisant le protocole RTS 433 MHz.
+Une intégration Home Assistant personnalisée (Fork) permettant de contrôler et de suivre précisément vos volets roulants, stores, porte de garage, portail et autres équipements utilisant le protocole RTS 433 MHz.
 
 ### [Explorer la documentation »](https://github.com/xkain/ESPSomfy-RTS-HA/wiki)
 
