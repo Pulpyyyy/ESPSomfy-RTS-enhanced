@@ -1,43 +1,30 @@
-[![GitHub Release](https://img.shields.io/github/release/xkain/ESPSomfy-RTS-HA.svg?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA/releases)
-[![License](https://img.shields.io/github/license/xkain/ESPSomfy-RTS-HA.svg?style=for-the-badge)](LICENSE)
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-blue.svg?style=for-the-badge)](https://github.com/hacs/default)
-[![Project Maintenance](https://img.shields.io/badge/maintainer-xkain-blue.svg?style=for-the-badge)](https://github.com/xkain)
-![Github](https://img.shields.io/github/followers/xkain.svg?style=for-the-badge)
-[![GitHub Activity](https://img.shields.io/github/last-commit/xkain/ESPSomfy-RTS-HA?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA/commits/main)
-
-
-
-
-
 <div align="center">
-  <!-- Badge HACS à gauche -->
- 
-  <!-- Bouton d'action Home Assistant à droite -->
-  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-HA">
-    <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.">
-  </a>
-<br />
-<br />
+
+[![GitHub Release](https://img.shields.io/github/release/xkain/ESPSomfy-RTS-HA.svg?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA/releases) [![GitHub Activity](https://img.shields.io/github/last-commit/xkain/ESPSomfy-RTS-HA/main?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA/commits/main) [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 <br />
 
+[![License](https://img.shields.io/github/license/xkain/ESPSomfy-RTS-HA.svg?style=for-the-badge)](LICENSE) [![Project Maintenance](https://img.shields.io/badge/maintainer-xkain-blue.svg?style=for-the-badge)](https://github.com/xkain) [![Github](https://img.shields.io/github/followers/xkain.svg?style=for-the-badge)](https://github.com/xkain)
 
-  <a href="https://github.com/xkain/ESPSomfy-RTS-HA/">
-    <img src="https://github.com/xkain/ESPSomfy-RTS/raw/main/images/logo.svg" alt="Logo" width="80" height="80">
-  </a>
+<br />
 
-  <h2 align="center"> ESPSomfy-RTS-HA</h2>
+<img src="https://github.com/xkain/ESPSomfy-RTS/blob/main/images/banniereRTS-ha.png" alt="ESPSomfy-RTS-HA Banner" width="100%">
 
-  <p align="center">
-    Une intégration Home Assistant personnalisée (Fork) permettant de contrôler et de suivre précisément vos équipements (volets roulants, stores, porte de garage, portail et autres équipements utilisant le protocole RTS 433 MHz.
-    <br />
-    <br />
-    <a href="https://github.com/xkain/ESPSomfy-RTS-HA/wiki"><strong>Explorer la documentation »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/xkain/ESPSomfy-RTS-HA/issues">Signaler un Bug</a>
-    ·
-    <a href="https://github.com/xkain/ESPSomfy-RTS-HA/pulls">Demander une Fonctionnalité</a>
-  </p>
+<br />
+<br />
+
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-HA">
+  <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.">
+</a>
+
+<br />
+<br />
+
+Une intégration Home Assistant personnalisée (Fork) permettant de contrôler et de suivre précisément vos équipements (volets roulants, stores, porte de garage, portail et autres équipements utilisant le protocole RTS 433 MHz.
+
+### [Explorer la documentation »](https://github.com/xkain/ESPSomfy-RTS-HA/wiki)
+
+**[Signaler un Bug](https://github.com/xkain/ESPSomfy-RTS-HA/issues) · [Request Feature](https://github.com/xkain/ESPSomfy-RTS-HA/pulls)**
+
 </div>
 
 <br />
