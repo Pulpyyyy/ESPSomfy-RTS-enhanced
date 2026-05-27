@@ -66,6 +66,8 @@ Une fois installée et Home Assistant redémarré, l'intégration **détectera a
 * **Mises à jour simplifiées** : Vous recevez une notification dès qu'une nouvelle version de l'intégration est disponible. De plus, depuis la v2.2.1 du firmware ESPSomfy RTS, une entité `update` dédiée vous permet de mettre à jour le micrologiciel de vos ESP32 directement depuis l'interface de Home Assistant.
 * **Automatisations** : Tous les volets sont exposés comme des entités `cover` classiques, prêtes à être intégrées à vos tableaux de bord et à vos automatisations via les services natifs.
 
+<img width="1006" height="470" alt="Capture d&#39;écran_20260527_113106" src="https://github.com/user-attachments/assets/46870a36-816e-406b-bb55-51aa91e7f178" />
+
 ---
 
 ## Gestion des Événements (Events)
