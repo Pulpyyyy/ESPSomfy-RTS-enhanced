@@ -66,6 +66,9 @@ Once installed and Home Assistant is restarted, the integration will **automatic
 * **Simplified Updates**: You will receive a notification whenever a new version of the integration is available. Additionally, since v2.2.1 of the ESPSomfy RTS firmware, a dedicated `update` entity allows you to update your ESP32 firmware directly from the Home Assistant UI.
 * **Automations**: All shades are exposed as standard `cover` entities, ready to be added to your dashboards and used in automations via native services.
 
+
+<img width="1006" height="470" alt="Capture d&#39;écran_20260527_113106" src="https://github.com/user-attachments/assets/46870a36-816e-406b-bb55-51aa91e7f178" />
+
 ---
 
 ## Event Management (Events)
