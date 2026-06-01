@@ -79,7 +79,7 @@ The integration emits events on the Home Assistant event bus for every intercept
 
 ### Event Payload Structure
 
-| Key | Description |
+| Key | Description  |
 | :--- | :--- |
 | `entity_id` | The target entity ID in Home Assistant (e.g., `cover.living_room_shade`). |
 | `event_key` | The event trigger (currently always set to `shadeCommand`). |
