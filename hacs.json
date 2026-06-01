@@ -1,5 +1,5 @@
 {
-  "name": "ESPSomfy-RTS-HA",
-  "render_readme": true
-
+  "name": "ESPSomfy-RTS-HA (XKain Edition)",
+  "render_readme": true,
+  "content_in_root": false
 }

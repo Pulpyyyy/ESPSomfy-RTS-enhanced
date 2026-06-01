@@ -1,14 +1,14 @@
 {
   "domain": "espsomfy_rts_ha",
-  "name": "ESPSomfy-RTS-HA",
+  "name": "ESPSomfy-RTS-HA (XKain Edition)",
   "codeowners": ["@xkain"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/xkain/ESPSomfy-RTS-HA/wiki",
+  "documentation": "https://github.com/xkain/espsomfy-rts-ha-enhanced/wiki",
   "homekit": {},
   "integration_type": "hub",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/xkain/ESPSomfy-RTS-HA/issues",
+  "issue_tracker": "https://github.com/xkain/espsomfy-rts-ha-enhanced/issues",
   "requirements": ["websocket-client>=1.8.0", "aiofiles"],
   "ssdp": [
     {

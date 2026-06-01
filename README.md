@@ -1,8 +1,8 @@
 <div align="center">
 
-[![GitHub Release](https://img.shields.io/github/release/xkain/ESPSomfy-RTS-HA.svg?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA/releases) [![GitHub Activity](https://img.shields.io/github/last-commit/xkain/ESPSomfy-RTS-HA/main?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA/commits/main) [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![GitHub Release](https://img.shields.io/github/release/xkain/ESPSomfy-RTS-HA-enhanced.svg?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA-enhanced/releases) [![GitHub Activity](https://img.shields.io/github/last-commit/xkain/ESPSomfy-RTS-HA-enhanced/main?style=for-the-badge)](https://github.com/xkain/ESPSomfy-RTS-HA-enhanced/commits/main) [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 <br />
-[![License](https://img.shields.io/github/license/xkain/ESPSomfy-RTS-HA.svg?style=for-the-badge)](LICENSE) [![Project Maintenance](https://img.shields.io/badge/maintainer-xkain-blue.svg?style=for-the-badge)](https://github.com/xkain) [![GitHub stars](https://img.shields.io/github/stars/xkain/ESPSomfy-RTS-HA?style=for-the-badge&logo=github&color=blue)](https://github.com/xkain/ESPSomfy-RTS-HA/stargazers)
+[![License](https://img.shields.io/github/license/xkain/ESPSomfy-RTS-HA-enhanced.svg?style=for-the-badge)](LICENSE) [![Project Maintenance](https://img.shields.io/badge/maintainer-xkain-blue.svg?style=for-the-badge)](https://github.com/xkain) [![GitHub stars](https://img.shields.io/github/stars/xkain/ESPSomfy-RTS-HA-enhanced?style=for-the-badge&logo=github&color=blue)](https://github.com/xkain/ESPSomfy-RTS-HA-enhanced/stargazers)
 
 <br />
 
@@ -12,7 +12,7 @@
 <br />
 
 
-<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-HA&category=integration">
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-HA-enhanced&category=integration">
   <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.">
 </a>
 
@@ -22,10 +22,10 @@
 
 A custom Home Assistant integration (Fork) to precisely control and monitor your equipment (roller shutters, shades, garage doors, gates) using the RTS 433 MHz protocol.
 
-### [README complet en français 🇫🇷 »](https://github.com/xkain/ESPSomfy-RTS-HA/blob/main/README_fr.md)
-### [Explore the documentation »](https://github.com/xkain/ESPSomfy-RTS-HA/wiki)
+### [README complet en français 🇫🇷 »](https://github.com/xkain/ESPSomfy-RTS-HA-enhanced/blob/main/README_fr.md)
+### [Explore the documentation »](https://github.com/xkain/ESPSomfy-RTS-HA-enhanced/wiki)
 
-**[Report Bug](https://github.com/xkain/ESPSomfy-RTS-HA/issues) · [Request Feature](https://github.com/xkain/ESPSomfy-RTS-HA/pulls)**
+**[Report Bug](https://github.com/xkain/ESPSomfy-RTS-HA-enhanced/issues) · [Request Feature](https://github.com/xkain/ESPSomfy-RTS-HA-enhanced/pulls)**
 
 </div>
 
@@ -33,12 +33,12 @@ A custom Home Assistant integration (Fork) to precisely control and monitor your
 
 ## Overview
 
-**ESPSomfy-RTS-HA** allows you to control all your devices in Home Assistant and accurately set their position. This integration relies on an ESP32 microcontroller coupled with a cheap CC1101 transceiver module, driven by the [ESPSomfy-RTS](https://github.com/xkain/ESPSomfy-RTS) firmware.
+**ESPSomfy-RTS-HA-enhanced** allows you to control all your devices in Home Assistant and accurately set their position. This integration relies on an ESP32 microcontroller coupled with a cheap CC1101 transceiver module, driven by the [ESPSomfy-RTS](https://github.com/xkain/ESPSomfy-RTS) firmware.
 
 ## Requirements
 
 This integration requires hardware running on an **ESP32** and a **CC1101** transceiver.
-To assemble and configure this hardware, please refer to the repository wiki: [components](https://github.com/rstrouse/ESPSomfy-RTS). The radio protocol must be configured for your devices before using this integration.
+To assemble and configure this hardware, please refer to the repository wiki: [components](https://github.com/xkain/ESPSomfy-RTS). The radio protocol must be configured for your devices before using this integration.
 
 ---
 
@@ -49,7 +49,7 @@ The easiest way to get started is to add this repository as a [Custom Repository
 
 1. Go to **HACS** → **Integrations**.
 2. Click the **3 dots** in the top right corner and select **Custom repositories**.
-3. Add the following URL: `https://github.com/xkain/ESPSomfy-RTS-HA`
+3. Add the following URL: `https://github.com/xkain/ESPSomfy-RTS-HA-enhanced`
 4. Select **Integration** as the category, then click **Add**.
 5. Download and install the integration.
 
@@ -102,4 +102,4 @@ The integration emits events on the Home Assistant event bus for every intercept
 
 ## Automations and Services
 
-Many specific services are available to enrich your automations. Check out the usage examples directly in the [Services section of the Wiki](https://github.com/rstrouse/ESPSomfy-RTS-HA/wiki/Services).
+Many specific services are available to enrich your automations. Check out the usage examples directly in the [Services section of the Wiki](https://github.com/xkain/ESPSomfy-RTS-HA-enhanced/wiki/Services).
