@@ -11,7 +11,7 @@
 <br />
 <br />
 
-<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-HA-enhanced">
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-enhanced">
   <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.">
 </a>
 
@@ -46,7 +46,7 @@ L'installation la plus simple se fait en ajoutant ce dépôt comme [Dépôt Pers
 
 1. Allez dans **HACS** → **Intégrations**.
 2. Cliquez sur les **3 points** en haut à droite et sélectionnez **Dépôts personnalisés**.
-3. Ajoutez l'URL suivante : `https://github.com/xkain/ESPSomfy-RTS-HA-enhanced`
+3. Ajoutez l'URL suivante : `https://github.com/xkain/ESPSomfy-RTS-enhanced`
 4. Sélectionnez **Intégration** comme catégorie, puis cliquez sur **Ajouter**.
 5. Téléchargez et installez l'intégration.
 

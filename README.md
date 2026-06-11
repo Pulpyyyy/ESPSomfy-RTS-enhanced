@@ -12,7 +12,7 @@
 <br />
 
 
-<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-HA-enhanced&category=integration">
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-enhanced&category=integration">
   <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.">
 </a>
 
@@ -49,7 +49,7 @@ The easiest way to get started is to add this repository as a [Custom Repository
 
 1. Go to **HACS** → **Integrations**.
 2. Click the **3 dots** in the top right corner and select **Custom repositories**.
-3. Add the following URL: `https://github.com/xkain/ESPSomfy-RTS-HA-enhanced`
+3. Add the following URL: `https://github.com/xkain/ESPSomfy-RTS-enhanced`
 4. Select **Integration** as the category, then click **Add**.
 5. Download and install the integration.
 
