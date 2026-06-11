@@ -74,10 +74,9 @@ class ESPSomfySunSensor(ESPSomfyEntity, BinarySensorEntity):
             self._attr_unique_id = f"sun_{controller.unique_id}_{self._shade_id}"
             self._sensor_type = "motor"
 
-        # 🟢 AJOUTS : Passage aux normes modernes de nommage
+        # 🟢 CORRECTION : Normes de nommage Home Assistant
         self._attr_has_entity_name = True
-        self._attr_name = None
-        self.translation_key = "sun_sensor"
+        self._attr_translation_key = "sun_sensor"  # Utilisation de la propriété _attr officielle
 
         if "flags" in data:
             self._attr_is_on = bool((int(data["flags"]) & 0x20) == 0x20)
@@ -128,10 +127,10 @@ class ESPSomfySunSensor(ESPSomfyEntity, BinarySensorEntity):
 
 
 class ESPSomfyWindSensor(ESPSomfyEntity, BinarySensorEntity):
-    """A sun flag sensor indicating whether there is sun."""
+    """A wind flag sensor indicating whether there is wind."""
 
     def __init__(self, controller: ESPSomfyController, data) -> None:
-        """Initialize a new SunSensor."""
+        """Initialize a new WindSensor."""
         super().__init__(controller=controller, data=data)
         self._controller = controller
         self._shade_id = None
@@ -147,10 +146,9 @@ class ESPSomfyWindSensor(ESPSomfyEntity, BinarySensorEntity):
             self._attr_unique_id = f"wind_{controller.unique_id}_{self._shade_id}"
             self._sensor_type = "motor"
 
-        # 🟢 AJOUTS : Passage aux normes modernes de nommage
+        # 🟢 CORRECTION : Normes de nommage Home Assistant
         self._attr_has_entity_name = True
-        self._attr_name = None
-        self.translation_key = "wind_sensor"
+        self._attr_translation_key = "wind_sensor"  # Utilisation de la propriété _attr officielle
 
         if "flags" in data:
             self._attr_is_on = bool((int(data["flags"]) & 0x10) == 0x10)

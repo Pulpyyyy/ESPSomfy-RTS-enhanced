@@ -83,6 +83,14 @@
         "name": "Micrologiciel"
       }
     },
+    "binary_sensor": {
+      "sun_sensor": {
+        "name": "Ensoleillement"
+      },
+      "wind_sensor": {
+        "name": "Vent"
+      }
+    },
     "sensor": {
       "host_name": {
         "name": "Nom d'hôte"
@@ -119,6 +127,14 @@
       },
       "ip_addresss": {
         "name": "Adresse IP"
+      }
+    },
+    "switch": {
+      "sun_mode_switch": {
+        "name": "Capteur solaire"
+      },
+      "dry_contact_switch": {
+        "name": "Contact sec"
       }
     }
   },
@@ -236,12 +252,12 @@
       }
     },
     "reboot": {
-      "name": "Redémarrer l'appareil",
-      "description": "Provoque le redémarrage du boîtier ESPSomfy"
+      "name": "Redémarrer",
+      "description": "Provoque le redémarrage du boîtier ESPSomfy-RTS"
     },
     "backup": {
-      "name": "Sauvegarder l'appareil",
-      "description": "Lance une sauvegarde de la configuration du boîtier ESPSomfy"
+      "name": "Sauvegarder",
+      "description": "Lance une sauvegarde de la configuration du boîtier ESPSomfy-RTS"
     }
   }
 }

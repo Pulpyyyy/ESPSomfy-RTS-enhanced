@@ -15,14 +15,14 @@ from .controller import ESPSomfyAPI, ESPSomfyController
 
 
 class ESPSomfyRTSEntityFeature(IntFlag):
-    """Supported features of ESPSomfy Entities."""
+    """Supported features of ESPSomfy-RTS Entities."""
 
     REBOOT = 1
     BACKUP = 2
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up ESPSomfy RTS from a config entry."""
+    """Set up ESPSomfy-RTS from a config entry."""
     api = ESPSomfyAPI(hass, entry.entry_id, entry.data)
     controller = ESPSomfyController(entry.entry_id, hass, api)
 
@@ -32,7 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await api.get_initial()
     if not api.is_configured:
         raise ConfigEntryNotReady(
-            f"Could not find ESPSomfy RTS device with address {api.get_api_url()}"
+            f"Could not find ESPSomfy-RTS device with address {api.get_api_url()}"
         )
 
     hass.config_entries.async_update_entry(entry, title=api.deviceName)

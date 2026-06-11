@@ -1,4 +1,4 @@
-"""Provides device actions for ESPSomfy RTS."""
+"""Provides device actions for ESPSomfy-RTS."""
 
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ async def async_validate_action_config(
 async def async_get_actions(
     hass: HomeAssistant, device_id: str
 ) -> list[dict[str, str]]:
-    """List device actions for ESPSomfy RTS devices."""
+    """List device actions for ESPSomfy-RTS devices."""
     actions = await toggle_entity.async_get_actions(hass, device_id, DOMAIN)
     registry = er.async_get(hass)
     for entry in er.async_entries_for_device(registry, device_id):

@@ -1,81 +1,81 @@
 {
   "config": {
     "abort": {
-      "no_devices_found": "No devices found on the network",
-      "single_instance_allowed": "Already configured. Only a single configuration is possible."
+      "no_devices_found": "No se encontraron dispositivos en la red",
+      "single_instance_allowed": "Ya está configurado. Solo se permite una única configuración."
     },
     "error": {
-      "cannot_connect": "Failed to connect",
-      "discovery_error": "Device not found",
-      "invalid_host": "Invalid hostname or IP address",
-      "unknown": "Unexpected error",
-      "invalid_password": "Invalid username or password",
-      "invalid_pin": "Invalid PIN code",
-      "login_error": "Invalid login credentials"
+      "cannot_connect": "Error al conectar",
+      "discovery_error": "Dispositivo no encontrado",
+      "invalid_host": "Nombre de host o dirección IP no válidos",
+      "unknown": "Error inesperado",
+      "invalid_password": "Nombre de usuario o contraseña no válidos",
+      "invalid_pin": "Código PIN no válido",
+      "login_error": "Credenciales de inicio de sesión no válidas"
     },
     "step": {
       "confirm": {
         "data": {
-          "host": "Host address for the ESPSomfy-RTS device",
-          "username": "Username",
-          "password": "Password",
-          "pin": "PIN code"
+          "host": "Dirección del host para el dispositivo ESPSomfy-RTS",
+          "username": "Nombre de usuario",
+          "password": "Contraseña",
+          "pin": "Código PIN"
         },
-        "title": "Configure ESPSomfy-RTS",
-        "description": "Provide the security options configured for your device"
+        "title": "Configurar ESPSomfy-RTS",
+        "description": "Proporciona las opciones de seguridad configuradas para tu dispositivo"
       },
       "user": {
         "data": {
-          "host": "Host address for the ESPSomfy-RTS device",
-          "username": "Username",
-          "password": "Password",
-          "pin": "PIN code"
+          "host": "Dirección del host para el dispositivo ESPSomfy-RTS",
+          "username": "Nombre de usuario",
+          "password": "Contraseña",
+          "pin": "Código PIN"
         },
-        "description": "Provide the security options configured for your device",
-        "title": "Configure ESPSomfy-RTS"
+        "description": "Proporciona las opciones de seguridad configuradas para tu dispositivo",
+        "title": "Configurar ESPSomfy-RTS"
       },
       "zeroconf_confirm": {
         "data": {
-          "host": "Host address for the ESPSomfy-RTS device",
-          "username": "Username",
-          "password": "Password",
-          "pin": "PIN code"
+          "host": "Dirección del host para el dispositivo ESPSomfy-RTS",
+          "username": "Nombre de usuario",
+          "password": "Contraseña",
+          "pin": "Código PIN"
         },
-        "description": "Do you want to add {model} with server ID {server_id} to Home Assistant?",
-        "title": "ESPSomfy-RTS Discovered"
+        "description": "¿Quieres añadir {model} con el ID de servidor {server_id} a Home Assistant?",
+        "title": "ESPSomfy-RTS Detectado"
       }
     }
   },
   "options": {
     "error": {
-      "cannot_connect": "Failed to connect",
-      "discovery_error": "Device not found",
-      "invalid_host": "Invalid hostname or IP address",
-      "unknown": "Unexpected error",
-      "invalid_password": "Invalid username or password",
-      "invalid_pin": "Invalid PIN code",
-      "login_error": "Invalid login credentials"
+      "cannot_connect": "Error al conectar",
+      "discovery_error": "Dispositivo no encontrado",
+      "invalid_host": "Nombre de host o dirección IP no válidos",
+      "unknown": "Error inesperado",
+      "invalid_password": "Nombre de usuario o contraseña no válidos",
+      "invalid_pin": "Código PIN no válido",
+      "login_error": "Credenciales de inicio de sesión no válidas"
     },
     "step": {
       "init": {
         "data": {
-          "host": "Host address for the ESPSomfy-RTS device",
-          "username": "Username",
-          "password": "Password",
-          "pin": "PIN code"
+          "host": "Dirección del host para el dispositivo ESPSomfy-RTS",
+          "username": "Nombre de usuario",
+          "password": "Contraseña",
+          "pin": "Código PIN"
         },
-        "title": "Configure ESPSomfy-RTS",
-        "description": "Settings for the security options configured for your device"
+        "title": "Configurar ESPSomfy-RTS",
+        "description": "Configuración de las opciones de seguridad para tu dispositivo"
       }
     }
   },
   "entity": {
     "button": {
       "reboot": {
-        "name": "Reboot"
+        "name": "Reiniciar"
       },
       "backup": {
-        "name": "Backup"
+        "name": "Copia de seguridad"
       }
     },
     "update": {
@@ -83,165 +83,181 @@
         "name": "Firmware"
       }
     },
+    "binary_sensor": {
+      "sun_sensor": {
+        "name": "Luz solar"
+      },
+      "wind_sensor": {
+        "name": "Viento"
+      }
+    },
     "sensor": {
       "host_name": {
-        "name": "Hostname"
+        "name": "Nombre de host"
       },
       "chip_model": {
-        "name": "Chip model"
+        "name": "Tipo de chip"
       },
       "conn_type": {
-        "name": "Connection"
+        "name": "Conexión"
       },
       "wifi_sensor": {
-        "name": "Wi-Fi signal strength"
+        "name": "Potencia de la señal Wi-Fi"
       },
       "wifi_ssid": {
-        "name": "Wi-Fi SSID"
+        "name": "SSID Wi-Fi"
       },
       "wifi_channel": {
-        "name": "Wi-Fi channel"
+        "name": "Canal Wi-Fi"
       },
       "eth_speed": {
-        "name": "Connection speed"
+        "name": "Velocidad de conexión"
       },
       "eth_full_duplex": {
         "name": "Full Duplex"
       },
       "free_memory": {
-        "name": "Free memory"
+        "name": "Memoria libre"
       },
       "max_memory": {
-        "name": "Max memory"
+        "name": "Memoria máxima"
       },
       "min_memory": {
-        "name": "Min memory"
+        "name": "Memoria mínima"
       },
       "ip_addresss": {
-        "name": "IP address"
+        "name": "Dirección IP"
+      }
+    },
+    "switch": {
+      "sun_mode_switch": {
+        "name": "Sensor de sol"
+      },
+      "dry_contact_switch": {
+        "name": "Contacto seco"
       }
     }
   },
   "services": {
     "open_shade": {
-      "name": "Open shade",
-      "description": "Opens the shade to 100% open"
+      "name": "Abrir persiana",
+      "description": "Abre la persiana por completo"
     },
     "close_shade": {
-      "name": "Close shade",
-      "description": "Closes the shade to 100% closed"
+      "name": "Cerrar persiana",
+      "description": "Cierra la persiana por completo"
     },
     "stop_shade": {
-      "name": "Stop shade",
-      "description": "Stops the shade at the current position"
+      "name": "Detener persiana",
+      "description": "Detiene la persiana en su posición actual"
     },
     "set_shade_position": {
-      "name": "Set position",
-      "description": "Sets the opening position to percentage",
+      "name": "Definir posición",
+      "description": "Ajusta la posición de apertura en porcentaje",
       "fields": {
         "position": {
-          "name": "Position",
-          "description": "The target position of the shade"
+          "name": "Posición",
+          "description": "La posición objetivo de la persiana"
         }
       }
     },
     "tilt_open": {
-      "name": "Tilt open",
-      "description": "Tilts the slats open"
+      "name": "Abrir inclinación",
+      "description": "Inclina las lamas a la posición abierta"
     },
     "tilt_close": {
-      "name": "Tilt close",
-      "description": "Tilts the slats closed"
+      "name": "Cerrar inclinación",
+      "description": "Inclina las lamas a la posición cerrada"
     },
     "set_tilt_position": {
-      "name": "Set tilt position",
-      "description": "Sets the tilt position of the slats to percentage",
+      "name": "Definir inclinación",
+      "description": "Ajusta la inclinación de las lamas en porcentaje",
       "fields": {
         "tilt_position": {
-          "name": "Tilt position",
-          "description": "The target tilt position of the slats"
+          "name": "Posición de inclinación",
+          "description": "La inclinación objetivo de las lamas"
         }
       }
     },
     "set_current_position": {
-      "name": "Force current position",
-      "description": "Sets the current position in HA without moving the motor",
+      "name": "Forzar posición actual",
+      "description": "Define la posición actual en HA sin accionar el motor",
       "fields": {
         "position": {
-          "name": "Position",
-          "description": "The position value to be saved"
+          "name": "Posición",
+          "description": "El valor de la posición que se va a guardar"
         }
       }
     },
     "set_current_tilt_position": {
-      "name": "Force current tilt position",
-      "description": "Sets the current tilt position in HA without moving the motor",
+      "name": "Forzar inclinación actual",
+      "description": "Define la posición de inclinación actual en HA sin accionar el motor",
       "fields": {
         "tilt_position": {
-          "name": "Tilt position",
-          "description": "The tilt position value to be saved"
+          "name": "Posición de inclinación",
+          "description": "El valor de la inclinación que se va a guardar"
         }
       }
     },
     "set_sunny": {
-      "name": "Set sunny state",
-      "description": "Sends the command to the motor indicating whether it is sunny or not",
+      "name": "Definir estado de sol",
+      "description": "Envía la orden al motor indicando si hay sol o no",
       "fields": {
         "sunny": {
-          "name": "Sunny",
-          "description": "Check if it is sunny"
+          "name": "Soleado",
+          "description": "Marcar si está soleado"
         }
       }
     },
     "set_windy": {
-      "name": "Set windy state",
-      "description": "Sends the command to the motor indicating whether it is windy or not",
+      "name": "Definir estado de viento",
+      "description": "Envía la orden al motor indicando si hace viento o no",
       "fields": {
         "windy": {
-          "name": "Windy",
-          "description": "Check if it is windy"
+          "name": "Ventoso",
+          "description": "Marcar si hace viento"
         }
       }
     },
     "send_command": {
-      "name": "Send RTS command",
-      "description": "Sends any raw command from the RTS protocol",
+      "name": "Enviar comando RTS",
+      "description": "Envía cualquier comando sin procesar del protocolo RTS",
       "fields": {
         "command": {
-          "name": "Command",
-          "description": "The RTS command to send"
+          "name": "Comando",
+          "description": "El comando RTS que se va a enviar"
         },
         "repeat": {
-          "name": "Repeat",
-          "description": "Number of times the command will be repeated"
+          "name": "Repetición",
+          "description": "Número de veces que se repetirá el comando"
         }
       }
     },
     "send_step_command": {
-      "name": "Send step command",
-      "description": "Sends a movement command in steps",
+      "name": "Enviar comando paso a paso",
+      "description": "Envía un comando de movimiento por pasos",
       "fields": {
         "direction": {
-          "name": "Direction",
-          "description": "The direction of the step (Up / Down)"
+          "name": "Dirección",
+          "description": "La dirección del paso (Arriba / Abajo)"
         },
         "step_size": {
-          "name": "Step size",
-          "description": "The size of the step (maximum is 127)"
+          "name": "Tamaño del paso",
+          "description": "El tamaño del paso (siendo 127 el máximo)"
         },
         "repeat": {
-          "name": "Repeat",
-          "description": "Number of times the command will be repeated"
+          "name": "Repetición",
+          "description": "Número de veces que se repetirá el comando"
         }
       }
     },
     "reboot": {
-      "name": "Reboot device",
-      "description": "Triggers a reboot of the ESPSomfy device"
+      "name": "Reiniciar",
+      "description": "Provoca el reinicio del dispositivo ESPSomfy-RTS"
     },
     "backup": {
-      "name": "Backup device",
-      "description": "Triggers a backup of the ESPSomfy device configuration"
+      "name": "Copia de seguridad",
+      "description": "Inicia una copia de seguridad de la configuración del dispositivo ESPSomfy-RTS"
     }
   }
 }

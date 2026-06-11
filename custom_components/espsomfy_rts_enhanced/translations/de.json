@@ -16,33 +16,33 @@
     "step": {
       "confirm": {
         "data": {
-          "host": "Host-Adresse für das ESPSomfy RTS-Gerät",
+          "host": "Host-Adresse für das ESPSomfy-RTS-Gerät",
           "username": "Benutzername",
           "password": "Passwort",
           "pin": "PIN-Code"
         },
-        "title": "ESPSomfy RTS konfigurieren",
-        "description": "Bitte gib die für dein Gerät konfigurierten Sicherheitsoptionen ein"
+        "title": "ESPSomfy-RTS konfigurieren",
+        "description": "Geben Sie die für Ihr Gerät konfigurierten Sicherheitsoptionen ein"
       },
       "user": {
         "data": {
-          "host": "Host-Adresse für das ESPSomfy RTS-Gerät",
+          "host": "Host-Adresse für das ESPSomfy-RTS-Gerät",
           "username": "Benutzername",
           "password": "Passwort",
           "pin": "PIN-Code"
         },
-        "description": "Bitte gib die für dein Gerät konfigurierten Sicherheitsoptionen ein",
-        "title": "ESPSomfy RTS konfigurieren"
+        "description": "Geben Sie die für Ihr Gerät konfigurierten Sicherheitsoptionen ein",
+        "title": "ESPSomfy-RTS konfigurieren"
       },
       "zeroconf_confirm": {
         "data": {
-          "host": "Host-Adresse für das ESPSomfy RTS-Gerät",
+          "host": "Host-Adresse für das ESPSomfy-RTS-Gerät",
           "username": "Benutzername",
           "password": "Passwort",
           "pin": "PIN-Code"
         },
-        "description": "Möchtest du {model} mit der Server-ID {server_id} zu Home Assistant hinzufügen?",
-        "title": "ESPSomfy RTS entdeckt"
+        "description": "Möchten Sie {model} mit der Server-ID {server_id} zu Home Assistant hinzufügen?",
+        "title": "ESPSomfy-RTS entdeckt"
       }
     }
   },
@@ -59,13 +59,13 @@
     "step": {
       "init": {
         "data": {
-          "host": "Host-Adresse für das ESPSomfy RTS-Gerät",
+          "host": "Host-Adresse für das ESPSomfy-RTS-Gerät",
           "username": "Benutzername",
           "password": "Passwort",
           "pin": "PIN-Code"
         },
-        "title": "ESPSomfy RTS konfigurieren",
-        "description": "Einstellungen der für dein Gerät konfigurierten Sicherheitsoptionen"
+        "title": "ESPSomfy-RTS konfigurieren",
+        "description": "Einrichtung der für Ihr Gerät konfigurierten Sicherheitsoptionen"
       }
     }
   },
@@ -75,7 +75,7 @@
         "name": "Neustarten"
       },
       "backup": {
-        "name": "Sichern"
+        "name": "Sicherung erstellen"
       }
     },
     "update": {
@@ -83,21 +83,29 @@
         "name": "Firmware"
       }
     },
+    "binary_sensor": {
+      "sun_sensor": {
+        "name": "Sonnenschein"
+      },
+      "wind_sensor": {
+        "name": "Wind"
+      }
+    },
     "sensor": {
       "host_name": {
         "name": "Hostname"
       },
       "chip_model": {
-        "name": "Chipsatz-Modell"
+        "name": "Chiptyp"
       },
       "conn_type": {
-        "name": "Verbindungstyp"
+        "name": "Verbindung"
       },
       "wifi_sensor": {
         "name": "WLAN-Signalstärke"
       },
       "wifi_ssid": {
-        "name": "WLAN-SSID"
+        "name": "WLAN SSID"
       },
       "wifi_channel": {
         "name": "WLAN-Kanal"
@@ -120,20 +128,28 @@
       "ip_addresss": {
         "name": "IP-Adresse"
       }
+    },
+    "switch": {
+      "sun_mode_switch": {
+        "name": "Sonnensensor"
+      },
+      "dry_contact_switch": {
+        "name": "Potenzialfreier Kontakt"
+      }
     }
   },
   "services": {
     "open_shade": {
-      "name": "Rollladen öffnen",
-      "description": "Öffnet den Rollladen zu 100%"
+      "name": "Abdeckung öffnen",
+      "description": "Öffnet die Abdeckung vollständig"
     },
     "close_shade": {
-      "name": "Rollladen schließen",
-      "description": "Schließt den Rollladen zu 100%"
+      "name": "Abdeckung schließen",
+      "description": "Schließt die Abdeckung vollständig"
     },
     "stop_shade": {
-      "name": "Rollladen stoppen",
-      "description": "Stoppt den Rollladen an der aktuellen Position"
+      "name": "Abdeckung anhalten",
+      "description": "Stoppt die Abdeckung an der aktuellen Position"
     },
     "set_shade_position": {
       "name": "Position festlegen",
@@ -141,24 +157,24 @@
       "fields": {
         "position": {
           "name": "Position",
-          "description": "Die Zielposition des Rollladens"
+          "description": "Die Zielposition der Abdeckung"
         }
       }
     },
     "tilt_open": {
       "name": "Lamellen öffnen",
-      "description": "Neigt die Lamellen in die geöffnete Position"
+      "description": "Neigt die Lamellen in die offene Position"
     },
     "tilt_close": {
       "name": "Lamellen schließen",
       "description": "Neigt die Lamellen in die geschlossene Position"
     },
     "set_tilt_position": {
-      "name": "Lamellenneigung festlegen",
+      "name": "Lamellenposition festlegen",
       "description": "Stellt die Neigung der Lamellen in Prozent ein",
       "fields": {
         "tilt_position": {
-          "name": "Neigungsposition",
+          "name": "Lamellenposition",
           "description": "Die Zielneigung der Lamellen"
         }
       }
@@ -174,27 +190,27 @@
       }
     },
     "set_current_tilt_position": {
-      "name": "Aktuelle Neigung erzwingen",
-      "description": "Setzt die aktuelle Neigung in HA, ohne den Motor zu bewegen",
+      "name": "Aktuelle Lamellenposition erzwingen",
+      "description": "Setzt die aktuelle Lamellenneigung in HA, ohne den Motor zu bewegen",
       "fields": {
         "tilt_position": {
-          "name": "Neigungsposition",
+          "name": "Lamellenposition",
           "description": "Der zu speichernde Neigungswert"
         }
       }
     },
     "set_sunny": {
-      "name": "Sonnigen Zustand festlegen",
-      "description": "Sendet den Befehl an den Motor, ob die Sonne scheint oder nicht",
+      "name": "Sonnenschein-Status festlegen",
+      "description": "Sendet den Befehl an den Motor, ob es sonnig ist oder nicht",
       "fields": {
         "sunny": {
           "name": "Sonnig",
-          "description": "Aktivieren, wenn die Sonne scheint"
+          "description": "Aktivieren, wenn es sonnig ist"
         }
       }
     },
     "set_windy": {
-      "name": "Windigen Zustand festlegen",
+      "name": "Wind-Status festlegen",
       "description": "Sendet den Befehl an den Motor, ob es windig ist oder nicht",
       "fields": {
         "windy": {
@@ -205,7 +221,7 @@
     },
     "send_command": {
       "name": "RTS-Befehl senden",
-      "description": "Sendet einen beliebigen Rohbefehl des RTS-Protokolls",
+      "description": "Sendet einen beliebigen Rohbefehl über das RTS-Protokoll",
       "fields": {
         "command": {
           "name": "Befehl",
@@ -213,35 +229,35 @@
         },
         "repeat": {
           "name": "Wiederholung",
-          "description": "Wie oft der Befehl wiederholt werden soll"
+          "description": "Anzahl der Wiederholungen für den Befehl"
         }
       }
     },
     "send_step_command": {
       "name": "Schritt-Befehl senden",
-      "description": "Sendet einen Bewegungsbefehl in Stufen",
+      "description": "Sendet einen schrittweisen Bewegungsbefehl",
       "fields": {
         "direction": {
           "name": "Richtung",
-          "description": "Die Richtung des Schritts (Auf / Ab)"
+          "description": "Die Richtung des Schritts (Hoch / Runter)"
         },
         "step_size": {
           "name": "Schrittweite",
-          "description": "Die Größe der Stufe (Maximum ist 127)"
+          "description": "Die Weite des Schritts (wobei 127 das Maximum ist)"
         },
         "repeat": {
           "name": "Wiederholung",
-          "description": "Wie oft der Befehl wiederholt werden soll"
+          "description": "Anzahl der Wiederholungen für den Befehl"
         }
       }
     },
     "reboot": {
-      "name": "Gerät neustarten",
-      "description": "Startet die ESPSomfy-Box neu"
+      "name": "Neustarten",
+      "description": "Löst einen Neustart des ESPSomfy-RTS-Geräts aus"
     },
     "backup": {
-      "name": "Gerät sichern",
-      "description": "Startet eine Sicherung der Konfiguration der ESPSomfy-Box"
+      "name": "Sicherung erstellen",
+      "description": "Löst eine Sicherung der ESPSomfy-RTS-Gerätekonfiguration aus"
     }
   }
 }

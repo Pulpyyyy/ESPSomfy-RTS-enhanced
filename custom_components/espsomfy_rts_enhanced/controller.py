@@ -257,7 +257,7 @@ class ESPSomfyController(DataUpdateCoordinator):
 
     @property
     def internet_available(self) -> bool:
-        """Indicates whether the ESPSomfy RTS hardware has internet access."""
+        """Indicates whether the ESPSomfy-RTS hardware has internet access."""
         return self.api.internet_available
 
     @property
@@ -415,9 +415,9 @@ class ESPSomfyController(DataUpdateCoordinator):
 
     def ws_onopen(self):
         """Websocket is opened."""
-        _LOGGER.debug("ESPSomfy RTS Socket was opened")
+        _LOGGER.debug("ESPSomfy-RTS Socket was opened")
         if self.api.is_configured:
-            _LOGGER.debug("ESPSomfy RTS Already Configured")
+            _LOGGER.debug("ESPSomfy-RTS Already Configured")
             data = {"event": EVT_CONNECTED, "connected": True}
             self.async_set_updated_data(data=data)
 
@@ -431,40 +431,8 @@ class ESPSomfyController(DataUpdateCoordinator):
         data = {"event": EVT_CONNECTED, "connected": False}
         self.async_set_updated_data(data=data)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class ESPSomfyAPI:
-    """API for sending data to ESPSomfy RTS hardware device."""
+    """API for sending data to ESPSomfy-RTS hardware device."""
 
     def __init__(self, hass: HomeAssistant, config_entry_id, data) -> None:
         """Initialize the API."""
@@ -554,7 +522,7 @@ class ESPSomfyAPI:
 
     @property
     def internet_available(self) -> bool:
-        """Check to see if the ESPSomfy RTS hardware has internet."""
+        """Check to see if the ESPSomfy-RTS hardware has internet."""
         if "inetAvailable" in self._config:
             return self._config["inetAvailable"]
         return self._can_update
@@ -832,7 +800,7 @@ class ESPSomfyAPI:
         )
 
     async def shade_command(self, data):
-        """Send commands to ESPSomfyRTS via PUT request."""
+        """Send commands to ESPSomfy-RTS via PUT request."""
         await self.put_command(API_SHADECOMMAND, data)
 
     async def set_current_position(self, shade_id: int, position: int):
@@ -889,7 +857,7 @@ class ESPSomfyAPI:
                     raise LoginError(f"{self._api_url} - {await resp.text()}")
 
     async def group_command(self, data):
-        """Send commands to ESPSomfyRTS via PUT request."""
+        """Send commands to ESPSomfy-RTS via PUT request."""
         async with self._session.put(
             f"{self._api_url}{API_GROUPCOMMAND}", json=data
         ) as resp:
@@ -899,7 +867,7 @@ class ESPSomfyAPI:
                 _LOGGER.error(await resp.text())
 
     async def tilt_command(self, data):
-        """Send tilt commands to ESPSomfyRTS via PUT request."""
+        """Send tilt commands to ESPSomfy-RTS via PUT request."""
         async with self._session.put(
             f"{self._api_url}{API_TILTCOMMAND}", json=data
         ) as resp:
@@ -909,7 +877,7 @@ class ESPSomfyAPI:
                 _LOGGER.error(await resp.text())
 
     async def get_initial(self):
-        """Get the initial config from ESPSomfy RTS."""
+        """Get the initial config from ESPSomfy-RTS."""
         try:
             self._session = aiohttp_client.async_get_clientsession(self.hass)
             async with self._session.get(f"{self._api_url}{API_DISCOVERY}") as resp:
@@ -920,7 +888,7 @@ class ESPSomfyAPI:
                         self._config_entry_id
                     )
                     if not self._configured:
-                        _LOGGER.debug("ESPSomfy RTS Setting up entities")
+                        _LOGGER.debug("ESPSomfy-RTS Setting up entities")
                         await self.hass.config_entries.async_forward_entry_setups(
                             entry, PLATFORMS
                         )

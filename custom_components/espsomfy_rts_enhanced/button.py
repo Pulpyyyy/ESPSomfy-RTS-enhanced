@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+import os
+import glob
 
 from packaging.version import parse as version_parse
 
@@ -49,7 +51,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up ESPSomfy RTS update based on a config entry."""
+    """Set up ESPSomfy-RTS update based on a config entry."""
     new_entities = []
     controller: ESPSomfyController = hass.data[DOMAIN][config_entry.entry_id]
     v = version_parse(controller.version)
@@ -127,20 +129,45 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
         self._attr_assumed_state = True
         self._attr_supported_features = cfg.features
 
-        # 🟢 AJOUTS : Application stricte de la norme Home Assistant
+        # Application de la norme Home Assistant
         self._attr_has_entity_name = cfg.has_entity_name
-        self._attr_name = None
+        self._attr_translation_key = cfg.translation_key
 
     async def async_press(self) -> None:
-        """Process the reboot."""
+        """Process the button press."""
         data = None
         if "data" in self._action:
             data = self._action["data"]
+
+        # 1. Exécution de l'action initiale (Reboot ou Sauvegarde)
         if "service" in self._action:
             await self._controller.api.put_command(self._action["service"], data)
         elif "apimethod" in self._action:
             method = getattr(self._controller.api, self._action["apimethod"])
             await method()
+
+        # 2. 🟢 AJOUT : Si c'est le bouton backup, on gère la rotation des 5 fichiers
+        if self.entity_description.key == "backup":
+            try:
+                # On récupère le chemin du dossier des sauvegardes
+                # (S'adapte dynamiquement selon l'adresse définie dans ton contrôleur)
+                backup_dir = self.hass.config.path(f"ESPSomfyRTS_{self._controller.unique_id}")
+
+                if os.path.exists(backup_dir):
+                    # Trouver tous les fichiers .backup dans ce dossier
+                    files = glob.glob(os.path.join(backup_dir, "*.backup"))
+
+                    # Trier les fichiers par date de modification (du plus récent au plus vieux)
+                    files.sort(key=os.path.getmtime, reverse=True)
+
+                    # Si on a plus de 5 fichiers, on supprime les plus anciens
+                    if len(files) > 5:
+                        files_to_delete = files[5:]
+                        for file_path in files_to_delete:
+                            os.remove(file_path)
+            except Exception:
+                # Sécurité pour éviter de bloquer l'intégration en cas d'erreur de droits sur les fichiers
+                pass
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""

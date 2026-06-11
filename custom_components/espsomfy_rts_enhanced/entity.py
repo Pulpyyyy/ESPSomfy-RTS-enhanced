@@ -33,7 +33,7 @@ class ESPSomfyEntity(CoordinatorEntity[ESPSomfyController], Entity):
                 identifiers={(DOMAIN, f"group_{self.controller.unique_id}_{group_id}")},
                 name=self._data.get("name", f"Group {group_id}"),
                 manufacturer=MANUFACTURER,
-                model="ESPSomfy RTS RTSGroup",
+                model="ESPSomfy-RTS Group",
                 via_device=(DOMAIN, self.controller.unique_id),
             )
 
@@ -44,7 +44,7 @@ class ESPSomfyEntity(CoordinatorEntity[ESPSomfyController], Entity):
                 identifiers={(DOMAIN, f"shade_{self.controller.unique_id}_{shade_id}")},
                 name=self._data.get("name", f"Shade {shade_id}"),
                 manufacturer=MANUFACTURER,
-                model="ESPSomfy RTS RTSShade",
+                model="ESPSomfy-RTS Device",
                 via_device=(DOMAIN, self.controller.unique_id),
             )
 
@@ -54,7 +54,7 @@ class ESPSomfyEntity(CoordinatorEntity[ESPSomfyController], Entity):
             identifiers={(DOMAIN, self.controller.unique_id)},
             name=self.controller.device_name,
             manufacturer=MANUFACTURER,
-            model=f"ESPSomfy RTS Integration {VERSION}",
+            model=f"ESPSomfy-RTS Enhanced Integration {VERSION}",
             sw_version=self.controller.version,
             hw_version=None,
         )

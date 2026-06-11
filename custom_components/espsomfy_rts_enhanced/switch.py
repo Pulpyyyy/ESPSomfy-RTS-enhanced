@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, EVT_CONNECTED, EVT_GROUPSTATE, EVT_SHADESTATE
@@ -70,8 +71,12 @@ class ESPSomfySunSwitch(ESPSomfyEntity, SwitchEntity):
         self._shade_id = None
         self._group_id = None
         self._attr_icon = "mdi:white-balance-sunny"
-        self._attr_name = data["name"]
-        self._attr_has_entity_name = False
+
+        # 🟢 CORRECTION : Normes de nommage et traduction HA
+        self._attr_has_entity_name = True
+        self._attr_translation_key = "sun_mode_switch"
+        self._attr_entity_category = EntityCategory.CONFIG
+
         self._sunswitch_type = None
         self._available = True
         if "groupId" in data:
@@ -154,8 +159,11 @@ class ESPSomfyBinarySwitch(ESPSomfyEntity, SwitchEntity):
         self._controller = controller
         self._shade_id = None
         self._group_id = None
-        self._attr_name = data["name"]
-        self._attr_has_entity_name = False
+
+        # 🟢 CORRECTION : Normes de nommage et traduction HA
+        self._attr_has_entity_name = True
+        self._attr_translation_key = "dry_contact_switch"
+
         self._binaryswitch_type = data["shadeType"]
         self._shade_id = data["shadeId"]
         self._available = True

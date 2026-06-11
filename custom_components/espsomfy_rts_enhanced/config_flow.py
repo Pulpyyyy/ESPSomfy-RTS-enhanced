@@ -55,7 +55,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
             pass
         else:
             raise DiscoveryError(f"{await resp.text()}")
-    return {"title": "ESPSomfy RTS", "server_id": "A1"}
+    return {"title": "ESPSomfy-RTS", "server_id": "A1"}
 
 
 # The ConfigFlow is only accessed when first setting up the integration.  This simply
@@ -111,7 +111,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 return self.async_create_entry(
                     title=api.deviceName,
-                    description=f"ESPSomfy RTS {api.server_id}",
+                    description=f"ESPSomfy-RTS {api.server_id}",
                     data=user_input,
                 )
             except InvalidHost:

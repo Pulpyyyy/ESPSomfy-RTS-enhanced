@@ -16,33 +16,33 @@
     "step": {
       "confirm": {
         "data": {
-          "host": "Host address for the ESPSomfy RTS device",
+          "host": "Host address for the ESPSomfy-RTS device",
           "username": "Username",
           "password": "Password",
-          "pin": "PIN code"
+          "pin": "PIN Code"
         },
-        "title": "Configure ESPSomfy RTS",
+        "title": "Configure ESPSomfy-RTS",
         "description": "Provide the security options configured for your device"
       },
       "user": {
         "data": {
-          "host": "Host address for the ESPSomfy RTS device",
+          "host": "Host address for the ESPSomfy-RTS device",
           "username": "Username",
           "password": "Password",
-          "pin": "PIN code"
+          "pin": "PIN Code"
         },
         "description": "Provide the security options configured for your device",
-        "title": "Configure ESPSomfy RTS"
+        "title": "Configure ESPSomfy-RTS"
       },
       "zeroconf_confirm": {
         "data": {
-          "host": "Host address for the ESPSomfy RTS device",
+          "host": "Host address for the ESPSomfy-RTS device",
           "username": "Username",
           "password": "Password",
-          "pin": "PIN code"
+          "pin": "PIN Code"
         },
         "description": "Do you want to add {model} with server ID {server_id} to Home Assistant?",
-        "title": "ESPSomfy RTS Discovered"
+        "title": "ESPSomfy-RTS Discovered"
       }
     }
   },
@@ -59,20 +59,20 @@
     "step": {
       "init": {
         "data": {
-          "host": "Host address for the ESPSomfy RTS device",
+          "host": "Host address for the ESPSomfy-RTS device",
           "username": "Username",
           "password": "Password",
-          "pin": "PIN code"
+          "pin": "PIN Code"
         },
-        "title": "Configure ESPSomfy RTS",
-        "description": "Settings for the security options configured for your device"
+        "title": "Configure ESPSomfy-RTS",
+        "description": "Set up the security options configured for your device"
       }
     }
   },
   "entity": {
     "button": {
       "reboot": {
-        "name": "Reboot"
+        "name": "Restart"
       },
       "backup": {
         "name": "Backup"
@@ -83,12 +83,20 @@
         "name": "Firmware"
       }
     },
+    "binary_sensor": {
+      "sun_sensor": {
+        "name": "Sunlight"
+      },
+      "wind_sensor": {
+        "name": "Wind"
+      }
+    },
     "sensor": {
       "host_name": {
         "name": "Hostname"
       },
       "chip_model": {
-        "name": "Chip model"
+        "name": "Chip type"
       },
       "conn_type": {
         "name": "Connection"
@@ -112,32 +120,40 @@
         "name": "Free memory"
       },
       "max_memory": {
-        "name": "Max memory"
+        "name": "Maximum memory"
       },
       "min_memory": {
-        "name": "Min memory"
+        "name": "Minimum memory"
       },
       "ip_addresss": {
         "name": "IP address"
+      }
+    },
+    "switch": {
+      "sun_mode_switch": {
+        "name": "Sun sensor"
+      },
+      "dry_contact_switch": {
+        "name": "Dry contact"
       }
     }
   },
   "services": {
     "open_shade": {
       "name": "Open shade",
-      "description": "Opens the shade to 100% open"
+      "description": "Opens the shade completely"
     },
     "close_shade": {
       "name": "Close shade",
-      "description": "Closes the shade to 100% closed"
+      "description": "Closes the shade completely"
     },
     "stop_shade": {
       "name": "Stop shade",
-      "description": "Stops the shade at the current position"
+      "description": "Stops the shade at its current position"
     },
     "set_shade_position": {
       "name": "Set position",
-      "description": "Sets the opening position to percentage",
+      "description": "Sets the shade opening position in percentage",
       "fields": {
         "position": {
           "name": "Position",
@@ -146,46 +162,46 @@
       }
     },
     "tilt_open": {
-      "name": "Tilt open",
-      "description": "Tilts the slats open"
+      "name": "Open tilt",
+      "description": "Tilts the slats to the open position"
     },
     "tilt_close": {
-      "name": "Tilt close",
-      "description": "Tilts the slats closed"
+      "name": "Close tilt",
+      "description": "Tilts the slats to the closed position"
     },
     "set_tilt_position": {
       "name": "Set tilt position",
-      "description": "Sets the tilt position of the slats to percentage",
+      "description": "Sets the tilt position of the slats in percentage",
       "fields": {
         "tilt_position": {
           "name": "Tilt position",
-          "description": "The target tilt position of the slats"
+          "description": "The target tilt of the slats"
         }
       }
     },
     "set_current_position": {
       "name": "Force current position",
-      "description": "Sets the current position in HA without moving the motor",
+      "description": "Sets the current position in HA without operating the motor",
       "fields": {
         "position": {
           "name": "Position",
-          "description": "The position value to be saved"
+          "description": "The position value to save"
         }
       }
     },
     "set_current_tilt_position": {
       "name": "Force current tilt position",
-      "description": "Sets the current tilt position in HA without moving the motor",
+      "description": "Sets the current tilt position in HA without operating the motor",
       "fields": {
         "tilt_position": {
           "name": "Tilt position",
-          "description": "The tilt position value to be saved"
+          "description": "The tilt value to save"
         }
       }
     },
     "set_sunny": {
-      "name": "Set sunny state",
-      "description": "Sends the command to the motor indicating whether it is sunny or not",
+      "name": "Set sunlight status",
+      "description": "Sends a command to the motor indicating whether it is sunny or not",
       "fields": {
         "sunny": {
           "name": "Sunny",
@@ -194,8 +210,8 @@
       }
     },
     "set_windy": {
-      "name": "Set windy state",
-      "description": "Sends the command to the motor indicating whether it is windy or not",
+      "name": "Set wind status",
+      "description": "Sends a command to the motor indicating whether it is windy or not",
       "fields": {
         "windy": {
           "name": "Windy",
@@ -205,7 +221,7 @@
     },
     "send_command": {
       "name": "Send RTS command",
-      "description": "Sends any raw command from the RTS protocol",
+      "description": "Sends any raw command using the RTS protocol",
       "fields": {
         "command": {
           "name": "Command",
@@ -219,7 +235,7 @@
     },
     "send_step_command": {
       "name": "Send step command",
-      "description": "Sends a movement command in steps",
+      "description": "Sends a step-by-step movement command",
       "fields": {
         "direction": {
           "name": "Direction",
@@ -227,7 +243,7 @@
         },
         "step_size": {
           "name": "Step size",
-          "description": "The size of the step (maximum is 127)"
+          "description": "The size of the step (127 being the maximum)"
         },
         "repeat": {
           "name": "Repeat",
@@ -236,12 +252,12 @@
       }
     },
     "reboot": {
-      "name": "Reboot device",
-      "description": "Triggers a reboot of the ESPSomfy device"
+      "name": "Restart",
+      "description": "Triggers a restart of the ESPSomfy-RTS device"
     },
     "backup": {
-      "name": "Backup device",
-      "description": "Triggers a backup of the ESPSomfy device configuration"
+      "name": "Backup",
+      "description": "Triggers a backup of the ESPSomfy-RTS device configuration"
     }
   }
 }
