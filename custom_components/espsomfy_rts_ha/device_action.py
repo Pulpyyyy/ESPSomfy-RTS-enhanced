@@ -59,7 +59,8 @@ async def async_get_actions(
     actions = await toggle_entity.async_get_actions(hass, device_id, DOMAIN)
     registry = er.async_get(hass)
     for entry in er.async_entries_for_device(registry, device_id):
-        if entry.entity_id.startswith("button.reboot"):
+        # 🟢 CORRECTION : Détection basée sur la fin de l'entity_id suite au changement de norme de nommage
+        if entry.entity_id.startswith("button.") and entry.entity_id.endswith("_reboot"):
             actions.append(
                 {
                     CONF_DEVICE_ID: device_id,
@@ -68,7 +69,7 @@ async def async_get_actions(
                     CONF_TYPE: "Reboot",
                 }
             )
-        elif entry.entity_id.startswith("button.backup"):
+        elif entry.entity_id.startswith("button.") and entry.entity_id.endswith("_backup"):
             actions.append(
                 {
                     CONF_DEVICE_ID: device_id,
@@ -88,11 +89,6 @@ async def async_call_action_from_config(
     context: Context | None,
 ) -> None:
     """Execute a device action."""
-    # print(context)
-    # print(service_data)
-    # print(config)
-    # if config[CONF_TYPE] == "restore":
-    #    service = API_RESTORE
     if config[CONF_TYPE] == "Backup":
         await hass.services.async_call(
             DOMAIN,

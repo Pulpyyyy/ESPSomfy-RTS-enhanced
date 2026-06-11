@@ -112,14 +112,13 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
         self, *, controller: ESPSomfyController, cfg: ESPSomfyButtonDescription
     ) -> None:
         """Initialize the reboot entity."""
-        # Sécurité : On force l'init avec les arguments nommés requis par entity.py
         super().__init__(data=None, controller=controller)
         self._controller = controller
         self._attr_device_class = cfg.device_class
-        
-        # Liaison avec la description (gère le name via translation_key et has_entity_name)
+
+        # Liaison avec la description
         self.entity_description = cfg
-        
+
         self._attr_unique_id = f"{cfg.key}_{controller.unique_id}"
         self._attr_entity_category = cfg.entity_category
         self._attr_icon = cfg.icon
@@ -127,6 +126,10 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
         self._action = cfg.action
         self._attr_assumed_state = True
         self._attr_supported_features = cfg.features
+
+        # 🟢 AJOUTS : Application stricte de la norme Home Assistant
+        self._attr_has_entity_name = cfg.has_entity_name
+        self._attr_name = None
 
     async def async_press(self) -> None:
         """Process the reboot."""

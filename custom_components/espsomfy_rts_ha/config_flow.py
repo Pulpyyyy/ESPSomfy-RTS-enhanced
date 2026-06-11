@@ -181,12 +181,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
-        """Get the options flow for espsomfy_rts_ha."""
+        """Get the options flow for espsomfy_rts_enhanced."""
         return ESPSomfyOptionsFlowHandler(config_entry)
 
 
 class ESPSomfyOptionsFlowHandler(config_entries.OptionsFlow):
-    """Options flow for espsomfy_rts_ha component."""
+    """Options flow for espsomfy_rts_enhanced component."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize the OptionsFlow."""
@@ -201,7 +201,7 @@ class ESPSomfyOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Configure options for espsomfy_rts_ha."""
+        """Configure options for espsomfy_rts_enhanced."""
         errors = {}
         if user_input is not None:
             try:

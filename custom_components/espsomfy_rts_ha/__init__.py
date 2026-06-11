@@ -25,7 +25,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up ESPSomfy RTS from a config entry."""
     api = ESPSomfyAPI(hass, entry.entry_id, entry.data)
     controller = ESPSomfyController(entry.entry_id, hass, api)
+
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = controller
+
+    # 1. On récupère la configuration initiale du boîtier
     await api.get_initial()
     if not api.is_configured:
         raise ConfigEntryNotReady(
@@ -34,16 +37,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.config_entries.async_update_entry(entry, title=api.deviceName)
 
-    # entry.title = api.deviceName
+    # 2. 🟢 CORRECTION : On charge proprement et immédiatement toutes les plateformes (cover, sensor, etc.)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
     async def _async_ws_close(_: Event) -> None:
         await controller.ws_close()
 
-    # If home assistant is unloaded gracefully then we need to stop the socket.
+    # Si Home Assistant s'arrête proprement, on ferme le socket
     entry.async_on_unload(
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_ws_close)
     )
-    # This does not occur until the socket connects.
-    # await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # 3. On lance la connexion WebSocket pour l'écoute en temps réel
     await controller.ws_connect()
 
     return True
@@ -54,12 +59,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     controller: ESPSomfyController = hass.data[DOMAIN].get(entry.entry_id)
     if controller is not None:
         await controller.ws_close()
-        if controller.api.is_configured:
-            if unload_ok := await hass.config_entries.async_unload_platforms(
-                entry, PLATFORMS
-            ):
-                hass.data[DOMAIN].pop(entry.entry_id)
-            return unload_ok
+        # 🟢 Simplification conforme aux normes récentes de HA pour le déchargement
+        if unload_ok := await hass.config_entries.async_unload_platforms(
+            entry, PLATFORMS
+        ):
+            hass.data[DOMAIN].pop(entry.entry_id)
+        return unload_ok
     return True
 
 

@@ -73,8 +73,12 @@ class ESPSomfySunSensor(ESPSomfyEntity, BinarySensorEntity):
             self._shade_id = data["shadeId"]
             self._attr_unique_id = f"sun_{controller.unique_id}_{self._shade_id}"
             self._sensor_type = "motor"
-        self._attr_name = data["name"]
-        self._attr_has_entity_name = False
+
+        # 🟢 AJOUTS : Passage aux normes modernes de nommage
+        self._attr_has_entity_name = True
+        self._attr_name = None
+        self.translation_key = "sun_sensor"
+
         if "flags" in data:
             self._attr_is_on = bool((int(data["flags"]) & 0x20) == 0x20)
         else:
@@ -142,8 +146,12 @@ class ESPSomfyWindSensor(ESPSomfyEntity, BinarySensorEntity):
             self._shade_id = data["shadeId"]
             self._attr_unique_id = f"wind_{controller.unique_id}_{self._shade_id}"
             self._sensor_type = "motor"
-        self._attr_name = data["name"]
-        self._attr_has_entity_name = False
+
+        # 🟢 AJOUTS : Passage aux normes modernes de nommage
+        self._attr_has_entity_name = True
+        self._attr_name = None
+        self.translation_key = "wind_sensor"
+
         if "flags" in data:
             self._attr_is_on = bool((int(data["flags"]) & 0x10) == 0x10)
         else:

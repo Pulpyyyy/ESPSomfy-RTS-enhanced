@@ -1,6 +1,6 @@
 {
-  "domain": "espsomfy_rts_ha",
-  "name": "ESPSomfy-RTS-HA - xkain Edition",
+  "domain": "espsomfy_rts_enhanced",
+  "name": "ESPSomfy-RTS Enhanced",
   "codeowners": ["@xkain"],
   "config_flow": true,
   "dependencies": [],

@@ -272,6 +272,10 @@ class ESPSomfyDiagSensor(ESPSomfyEntity, SensorEntity):
         self.events = cfg.events
         self._attr_native_value = cfg.native_value
 
+        # Activer la norme et forcer le nom à None pour exploiter la translation_key
+        self._attr_has_entity_name = cfg.has_entity_name
+        self._attr_name = None
+
         # Correction : On mappe les propriétés système indispensables
         self._attr_native_unit_of_measurement = cfg.unit_of_measurement
         self._attr_device_class = cfg.device_class
@@ -352,4 +356,3 @@ class ESPSomfyWifiStrengthSensor(ESPSomfyDiagSensor):
     def should_poll(self) -> bool:
         """Indicates that the sensor should not poll."""
         return False
-

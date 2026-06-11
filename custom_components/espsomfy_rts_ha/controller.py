@@ -322,26 +322,24 @@ class ESPSomfyController(DataUpdateCoordinator):
     def ensure_group_configured(self, data):
         """Ensure the group exists on Home Assistant."""
         uuid = f"{self.unique_id}_group{data['groupId']}"
-        devices = dr.async_get(self.hass)
-        device = devices.async_get_device({(DOMAIN, self.unique_id)})
         entities = er.async_get(self.hass)
+
         for entity in er.async_entries_for_config_entry(entities, self.config_entry_id):
             if entity.unique_id == uuid:
                 return
+
         dev_features = (
             CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP
         )
-
         dev_class = CoverDeviceClass.SHADE
-        # Reload all the shades
-        # self.api.load_shades()
-        # I have no idea whether this reloads the devices or not.
+
+        # 🟢 CORRECTION : On ne force plus device_id pour laisser HA générer l'appareil
+        # basé sur le DeviceInfo de la classe de l'entité.
         entities.async_get_or_create(
             domain=DOMAIN,
             platform=Platform.COVER,
             original_device_class=dev_class,
             unique_id=uuid,
-            device_id=device.id,
             original_name=data["name"],
             suggested_object_id=f"{str(data['name']).lower().replace(' ', '_')}",
             supported_features=dev_features,
@@ -350,15 +348,12 @@ class ESPSomfyController(DataUpdateCoordinator):
     def ensure_shade_configured(self, data):
         """Ensure the shade exists on Home Assistant."""
         uuid = f"{self.unique_id}_{data['shadeId']}"
-
-        devices = dr.async_get(self.hass)
-        device = devices.async_get_device({(DOMAIN, self.unique_id)})
-
         entities = er.async_get(self.hass)
 
         for entity in er.async_entries_for_config_entry(entities, self.config_entry_id):
             if entity.unique_id == uuid:
                 return
+
         dev_features = (
             CoverEntityFeature.OPEN
             | CoverEntityFeature.CLOSE
@@ -392,15 +387,12 @@ class ESPSomfyController(DataUpdateCoordinator):
                 case _:
                     dev_class = CoverDeviceClass.SHADE
 
-        # Reload all the shades
-        # self.api.load_shades()
-        # I have no idea whether this reloads the devices or not.
+        # 🟢 CORRECTION : Retrait du device_id en dur pour permettre la création de l'appareil dédié
         entities.async_get_or_create(
             domain=DOMAIN,
             platform=Platform.COVER,
             original_device_class=dev_class,
             unique_id=uuid,
-            device_id=device.id,
             original_name=data["name"],
             suggested_object_id=f"{str(data['name']).lower().replace(' ', '_')}",
             supported_features=dev_features,
@@ -428,16 +420,6 @@ class ESPSomfyController(DataUpdateCoordinator):
             _LOGGER.debug("ESPSomfy RTS Already Configured")
             data = {"event": EVT_CONNECTED, "connected": True}
             self.async_set_updated_data(data=data)
-        else:
-            _LOGGER.debug("ESPSomfy RTS configuring entities")
-            loop = asyncio.get_event_loop()
-            coro = loop.create_task(self.api.get_initial())
-
-            def handle_connected(_coro):
-                data = {"event": EVT_CONNECTED, "connected": True}
-                self.async_set_updated_data(data=data)
-
-            coro.add_done_callback(handle_connected)
 
     def ws_onerror(self, exception):
         """Error on the socket connection."""
@@ -448,6 +430,37 @@ class ESPSomfyController(DataUpdateCoordinator):
         """Socket closed."""
         data = {"event": EVT_CONNECTED, "connected": False}
         self.async_set_updated_data(data=data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class ESPSomfyAPI:
@@ -919,10 +932,12 @@ class ESPSomfyAPI:
 
     async def fetch_release_notes(self, version: str) -> str | None:
         """Télécharge les notes de version depuis l'API GitHub."""
-        # Note : Si tu utilises ton propre fork, remplace rstrouse par ton pseudo GitHub
         url = f"https://api.github.com/repos/xkain/ESPSomfy-RTS/releases/tags/{version}"
-        headers = {"Accept": "application/vnd.github.v3+json"}
-        
+        headers = {
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "HomeAssistant-ESPSomfyRTS-Integration" # 🟢 Ajout pour éviter les rejets de l'API GitHub
+        }
+
         try:
             async with self._session.get(url, headers=headers, timeout=10) as response:
                 if response.status == 200:

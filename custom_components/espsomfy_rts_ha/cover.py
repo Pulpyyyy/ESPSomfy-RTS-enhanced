@@ -354,7 +354,9 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
         self._tilt_position = 100
         self._tilt_direction = 0
         self._attr_unique_id = f"{controller.unique_id}_{self._shade_id}"
-        self._attr_name = data["name"]
+        self._attr_has_entity_name = True
+        self._attr_name = None
+        self._shade_name = data["name"]
         self._direction = 0
         self._attr_available = True
         self._has_tilt = False
@@ -533,7 +535,7 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
         bus_data = {
             "entity_id": self.entity_id,
             "event_key": EVT_SHADECOMMAND,
-            "name": self.name,
+            "name": self._shade_name,
             "source": self._state_attributes.get("cmd_source", ""),
             "remote_address": self._state_attributes.get("remote_address", 0),
             "source_address": self._state_attributes.get("cmd_address", 0),
@@ -581,7 +583,7 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
                 bus_data = {
                     "entity_id": self.entity_id,
                     "event_key": EVT_SHADECOMMAND,
-                    "name": self.name,
+                    "name": self._shade_name,
                     "source": self._state_attributes.get("cmd_source", ""),
                     "remote_address": self._state_attributes.get("remote_address", 0),
                     "source_address": self._state_attributes.get("cmd_address", 0),
