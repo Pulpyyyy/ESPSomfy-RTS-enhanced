@@ -41,7 +41,7 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
     # On force l'entité à rester dans le bloc "Configuration" du tableau de bord
     _attr_entity_category = EntityCategory.CONFIG
 
-    # Indique à Home Assistant que l'appareil pousse ses données et qu'il ne faut pas le poll (évite le NotImplementedError)
+    # Indique explicitement à Home Assistant de ne JAMAIS rafraîchir cette entité en boucle (Bloque le NotImplementedError)
     _attr_should_poll = False
 
     _attr_has_entity_name = True
@@ -78,7 +78,7 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
         elif self._controller.data["event"] == EVT_FWSTATUS:
             evt_data = self._controller.data
 
-            # CORRECTION : Changé de .error à .debug pour ne plus polluer les logs de l'utilisateur
+            # Changé de .error à .debug pour ne plus polluer les logs de l'utilisateur
             _LOGGER.debug("ESPSomfy RTS FWSTATUS Payload: %s", evt_data)
 
             # Extraction des deux verrous de sécurité
@@ -127,7 +127,8 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
     @property
     def installed_version(self) -> str | None:
         """Version currently installed and in use."""
-        if (version := self.coordinator.version) is None:
+        # 🟢 CORRECTION : Utilise l'objet controller au lieu du faux coordinator standard
+        if (version := self._controller.version) is None:
             return None
         return str(version)
 
@@ -138,7 +139,8 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
         if cfg.get("checkForUpdate", False) is False:
             return None
 
-        if (latest := self.coordinator.latest_version) is None:
+        # 🟢 CORRECTION : Utilise l'objet controller au lieu du faux coordinator standard
+        if (latest := self._controller.latest_version) is None:
             return None
         return str(latest)
 
