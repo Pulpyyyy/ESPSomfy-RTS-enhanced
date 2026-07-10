@@ -35,13 +35,10 @@ async def async_setup_entry(
 
 class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
     """Defines an ESPSomfy RTS update entity."""
-
     _attr_device_class = UpdateDeviceClass.FIRMWARE
-
-    # On force l'entité à rester dans le bloc "Configuration" du tableau de bord
     _attr_entity_category = EntityCategory.CONFIG
 
-    # Indique explicitement à Home Assistant de ne JAMAIS rafraîchir cette entité en boucle (Bloque le NotImplementedError)
+    # Indique explicitement à Home Assistant de ne pas rafraîchir cette entité par lui-même
     _attr_should_poll = False
 
     _attr_has_entity_name = True
@@ -127,7 +124,6 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
     @property
     def installed_version(self) -> str | None:
         """Version currently installed and in use."""
-        # 🟢 CORRECTION : Utilise l'objet controller au lieu du faux coordinator standard
         if (version := self._controller.version) is None:
             return None
         return str(version)
@@ -139,7 +135,6 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
         if cfg.get("checkForUpdate", False) is False:
             return None
 
-        # 🟢 CORRECTION : Utilise l'objet controller au lieu du faux coordinator standard
         if (latest := self._controller.latest_version) is None:
             return None
         return str(latest)
@@ -176,3 +171,11 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
             return None
 
         return await self._controller.fetch_release_notes(version)
+
+    async def async_update(self) -> None:
+        """Update the entity state.
+
+        Overridden to prevent Home Assistant from polling the coordinator
+        and triggering a NotImplementedError.
+        """
+        pass
