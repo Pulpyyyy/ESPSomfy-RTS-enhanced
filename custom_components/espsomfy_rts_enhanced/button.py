@@ -133,6 +133,9 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
         self._attr_has_entity_name = cfg.has_entity_name
         self._attr_translation_key = cfg.translation_key
 
+        # Correction ici : ajout de .api
+        self._attr_object_id = f"{controller.api.deviceName.lower()}_{cfg.key}"
+
     async def async_press(self) -> None:
         """Process the button press."""
         data = None

@@ -37,9 +37,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.config_entries.async_update_entry(entry, title=api.deviceName)
 
-    # 2. 🟢 CORRECTION : On charge proprement et immédiatement toutes les plateformes (cover, sensor, etc.)
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
     async def _async_ws_close(_: Event) -> None:
         await controller.ws_close()
 
@@ -48,11 +45,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_ws_close)
     )
 
-    # 3. On lance la connexion WebSocket pour l'écoute en temps réel
+    # 3. On lance la connexion WebSocket (qui chargera les plateformes au moment opportun)
     await controller.ws_connect()
 
     return True
-
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""

@@ -37,16 +37,12 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
     """Defines an ESPSomfy RTS update entity."""
 
     _attr_device_class = UpdateDeviceClass.FIRMWARE
-    
+
     # On force l'entité à rester dans le bloc "Configuration" du tableau de bord
     _attr_entity_category = EntityCategory.CONFIG
-    
-    _attr_supported_features = (
-        UpdateEntityFeature.SPECIFIC_VERSION
-        | UpdateEntityFeature.INSTALL
-        | UpdateEntityFeature.PROGRESS
-        | UpdateEntityFeature.RELEASE_NOTES
-    )
+
+    # Indique à Home Assistant que l'appareil pousse ses données et qu'il ne faut pas le poll (évite le NotImplementedError)
+    _attr_should_poll = False
 
     _attr_has_entity_name = True
     _attr_translation_key = "firmware"
@@ -62,7 +58,7 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
         self._fw_progress = 100
         self._app_progress = 100
         self._total_progress = 100
-        
+
         # Sécurité au démarrage : On applique les fonctionnalités de base
         self._attr_supported_features = (
             UpdateEntityFeature.SPECIFIC_VERSION
@@ -78,12 +74,13 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
         ):
             self._available = bool(self._controller.data["connected"])
             self.async_write_ha_state()
-            
+
         elif self._controller.data["event"] == EVT_FWSTATUS:
             evt_data = self._controller.data
-            
-            _LOGGER.error("ESPSomfy RTS FWSTATUS Payload: %s", evt_data)
-            
+
+            # CORRECTION : Changé de .error à .debug pour ne plus polluer les logs de l'utilisateur
+            _LOGGER.debug("ESPSomfy RTS FWSTATUS Payload: %s", evt_data)
+
             # Extraction des deux verrous de sécurité
             check_updates = evt_data.get("checkForUpdate", False)
             internet_ok = evt_data.get("inetAvailable", False)
@@ -104,7 +101,7 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
                     | UpdateEntityFeature.RELEASE_NOTES
                 )
             self.async_write_ha_state()
-            
+
         elif self.controller.data["event"] == EVT_UPDPROGRESS:
             d = self.controller.data
             if "part" in d:
@@ -140,7 +137,7 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
         cfg = self._controller.api.get_config()
         if cfg.get("checkForUpdate", False) is False:
             return None
-            
+
         if (latest := self.coordinator.latest_version) is None:
             return None
         return str(latest)
