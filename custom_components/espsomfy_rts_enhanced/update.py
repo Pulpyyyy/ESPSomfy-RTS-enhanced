@@ -151,7 +151,7 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
         """URL to the full release notes of the latest version available."""
         if (version := self.latest_version) is None:
             return None
-        return f"https://github.com/xkain/ESPSomfy-RTS/releases/tag/{version}"
+        return f"https://github.com/Pulpyyyy/ESPSomfy-RTS/releases/tag/{version}"
 
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any

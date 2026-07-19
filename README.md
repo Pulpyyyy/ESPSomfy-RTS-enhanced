@@ -6,7 +6,7 @@
 
 <br />
 
-<img src="https://github.com/xkain/ESPSomfy-RTS/blob/main/images/banniereRTS-ha.png" alt="ESPSomfy-RTS-HA Banner" width="100%">
+<img src="https://github.com/Pulpyyyy/ESPSomfy-RTS/blob/main/images/banniereRTS-ha.png" alt="ESPSomfy-RTS-HA Banner" width="100%">
 
 <br />
 <br />
@@ -33,12 +33,12 @@ A custom Home Assistant integration (Fork) to precisely control and monitor your
 
 ## Overview
 
-**ESPSomfy-RTS-HA-enhanced** allows you to control all your devices in Home Assistant and accurately set their position. This integration relies on an ESP32 microcontroller coupled with a cheap CC1101 transceiver module, driven by the [ESPSomfy-RTS](https://github.com/xkain/ESPSomfy-RTS) firmware.
+**ESPSomfy-RTS-HA-enhanced** allows you to control all your devices in Home Assistant and accurately set their position. This integration relies on an ESP32 microcontroller coupled with a cheap CC1101 transceiver module, driven by the [ESPSomfy-RTS](https://github.com/Pulpyyyy/ESPSomfy-RTS) firmware.
 
 ## Requirements
 
 This integration requires hardware running on an **ESP32** and a **CC1101** transceiver.
-To assemble and configure this hardware, please refer to the repository wiki: [components](https://github.com/xkain/ESPSomfy-RTS). The radio protocol must be configured for your devices before using this integration.
+To assemble and configure this hardware, please refer to the repository wiki: [components](https://github.com/Pulpyyyy/ESPSomfy-RTS). The radio protocol must be configured for your devices before using this integration.
 
 ---
 

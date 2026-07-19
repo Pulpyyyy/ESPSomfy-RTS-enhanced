@@ -6,7 +6,7 @@
 
 <br />
 
-<img src="https://github.com/xkain/ESPSomfy-RTS/blob/main/images/banniereRTS-ha.png" alt="ESPSomfy-RTS-HA Banner" width="100%">
+<img src="https://github.com/Pulpyyyy/ESPSomfy-RTS/blob/main/images/banniereRTS-ha.png" alt="ESPSomfy-RTS-HA Banner" width="100%">
 
 <br />
 <br />
@@ -30,12 +30,12 @@ Une intégration Home Assistant personnalisée (Fork) permettant de contrôler e
 
 ## Présentation
 
-**ESPSomfy-RTS-HA-enhanced** vous permet de piloter tous vos équipements dans Home Assistant et de définir précisément leur position. L'intégration s'appuie sur un microcontrôleur ESP32 couplé à un module émetteur-récepteur CC1101 piloté par le firmware [ESPSomfy-RTS](https://github.com/xkain/ESPSomfy-RTS).
+**ESPSomfy-RTS-HA-enhanced** vous permet de piloter tous vos équipements dans Home Assistant et de définir précisément leur position. L'intégration s'appuie sur un microcontrôleur ESP32 couplé à un module émetteur-récepteur CC1101 piloté par le firmware [ESPSomfy-RTS](https://github.com/Pulpyyyy/ESPSomfy-RTS).
 
 ## Prérequis
 
 Cette intégration nécessite une passerelle matérielle basée sur un **ESP32** et un **CC1101**. 
-Pour assembler et configurer ce matériel, veuillez vous référer au wiki du dépot : [components](https://github.com/xkain/ESPSomfy-RTS). Le protocole radio doit être configuré pour vos équipements avant d'utiliser cette intégration.
+Pour assembler et configurer ce matériel, veuillez vous référer au wiki du dépot : [components](https://github.com/Pulpyyyy/ESPSomfy-RTS). Le protocole radio doit être configuré pour vos équipements avant d'utiliser cette intégration.
 
 ---
 

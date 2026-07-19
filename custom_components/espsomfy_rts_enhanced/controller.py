@@ -906,7 +906,7 @@ class ESPSomfyAPI:
 
     async def fetch_release_notes(self, version: str) -> str | None:
         """Télécharge les notes de version depuis l'API GitHub."""
-        url = f"https://api.github.com/repos/xkain/ESPSomfy-RTS/releases/tags/{version}"
+        url = f"https://api.github.com/repos/Pulpyyyy/ESPSomfy-RTS/releases/tags/{version}"
         headers = {
             "Accept": "application/vnd.github.v3+json",
             "User-Agent": "HomeAssistant-ESPSomfyRTS-Integration" # 🟢 Ajout pour éviter les rejets de l'API GitHub
