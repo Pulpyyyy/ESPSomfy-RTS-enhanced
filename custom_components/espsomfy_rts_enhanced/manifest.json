@@ -12,7 +12,7 @@
   "requirements": ["websocket-client>=1.8.0", "aiofiles"],
   "ssdp": [
     {
-      "deviceType": "urn:schemas-xkain-org:device:Somfy:1"
+      "deviceType": "urn:schemas-pulpyyyy-org:device:Somfy:1"
     }
   ],
   "version": "3.0.0",
