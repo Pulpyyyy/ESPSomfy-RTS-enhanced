@@ -629,6 +629,12 @@ class ESPSomfyAPI:
             url = f"{self._api_url}/backup?attach=true"
             async with self._session.get(url, headers=self._headers) as resp:
                 if resp.status != 200:
+                    _LOGGER.error(
+                        "Backup request to %s failed (%s): %s",
+                        url,
+                        resp.status,
+                        await resp.text(),
+                    )
                     return False
 
                 os.makedirs(self.backup_dir, exist_ok=True)

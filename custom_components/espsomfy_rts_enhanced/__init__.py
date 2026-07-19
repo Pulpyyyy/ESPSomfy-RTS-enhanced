@@ -5,13 +5,18 @@ from __future__ import annotations
 from enum import IntFlag
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import (
+    CONF_PASSWORD,
+    CONF_PIN,
+    CONF_USERNAME,
+    EVENT_HOMEASSISTANT_STOP,
+)
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.device_registry import DeviceEntry
 
 from .const import DOMAIN, PLATFORMS
-from .controller import ESPSomfyAPI, ESPSomfyController
+from .controller import ESPSomfyAPI, ESPSomfyController, LoginError
 
 
 class ESPSomfyRTSEntityFeature(IntFlag):
@@ -34,6 +39,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         raise ConfigEntryNotReady(
             f"Could not find ESPSomfy-RTS device with address {api.get_api_url()}"
         )
+
+    # 2. Authentification auprès du boîtier : sans ce login l'apikey reste vide
+    #    et tous les appels REST authentifiés (backup, etc.) renvoient 401.
+    try:
+        await api.login(
+            {
+                "username": entry.data.get(CONF_USERNAME, ""),
+                "password": entry.data.get(CONF_PASSWORD, ""),
+                "pin": entry.data.get(CONF_PIN, ""),
+            }
+        )
+    except LoginError as ex:
+        raise ConfigEntryNotReady(
+            f"Could not log in to ESPSomfy-RTS device at {api.get_api_url()}: {ex}"
+        ) from ex
 
     hass.config_entries.async_update_entry(entry, title=api.deviceName)
 
