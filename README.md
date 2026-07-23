@@ -23,7 +23,7 @@
 A custom Home Assistant integration (Fork) to precisely control and monitor your equipment (roller shutters, shades, garage doors, gates) using the RTS 433 MHz protocol.
 
 ### [README complet en français 🇫🇷 »](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/blob/main/README_fr.md)
-### [Explore the documentation »](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/wiki)
+### [Explore the documentation »](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/tree/main/docs)
 
 **[Report Bug](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/issues) · [Request Feature](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/pulls)**
 
@@ -102,4 +102,4 @@ The integration emits events on the Home Assistant event bus for every intercept
 
 ## Automations and Services
 
-Many specific services are available to enrich your automations. Check out the usage examples directly in the [Services section of the Wiki](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/wiki/Services).
+Many specific services are available to enrich your automations. Check out the usage examples directly in the [Services section of the Wiki](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/blob/main/docs/Services.md).

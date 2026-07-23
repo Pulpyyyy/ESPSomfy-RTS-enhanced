@@ -20,7 +20,7 @@
 
 Une intégration Home Assistant personnalisée (Fork) permettant de contrôler et de suivre précisément vos volets roulants, stores, porte de garage, portail et autres équipements utilisant le protocole RTS 433 MHz.
 
-### [Explorer la documentation »](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/wiki)
+### [Explorer la documentation »](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/tree/main/docs)
 
 **[Signaler un Bug](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/issues) · [Request Feature](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/pulls)**
 
@@ -98,4 +98,4 @@ L'intégration émet des événements sur le bus de Home Assistant pour chaque c
 
 ##  Automatisations et Services
 
-De nombreux services spécifiques sont mis à votre disposition pour enrichir vos automatisations. Consultez les exemples d'utilisation directement dans la section [Services du Wiki](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/wiki/Services).
+De nombreux services spécifiques sont mis à votre disposition pour enrichir vos automatisations. Consultez les exemples d'utilisation directement dans la section [Services du Wiki](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/blob/main/docs/Services.md).
