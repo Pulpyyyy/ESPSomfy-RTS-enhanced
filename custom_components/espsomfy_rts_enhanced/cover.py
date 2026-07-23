@@ -25,7 +25,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .const import (
-    DOMAIN,
     EVT_CONNECTED,
     EVT_SHADECOMMAND,
     EVT_SHADEREMOVED,
@@ -113,7 +112,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up shades for the shade controller."""
-    controller = hass.data[DOMAIN][config_entry.entry_id]
+    controller = config_entry.runtime_data
     new_shades = []
     data = controller.api.get_config()
     if "serverId" in data:
@@ -287,11 +286,6 @@ class ESPSomfyGroup(CoverGroup, ESPSomfyEntity):
     def available(self) -> bool:
         """Indicates whether the shade is available."""
         return self._attr_available
-
-    @property
-    def should_poll(self) -> bool:
-        """Indicates whether the group should poll for information."""
-        return False
 
     @property
     def icon(self) -> str:
@@ -601,11 +595,6 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
     def available(self) -> bool:
         """Indicates whether the shade is available."""
         return self._attr_available
-
-    @property
-    def should_poll(self) -> bool:
-        """Indicates whether the shade should poll for information."""
-        return False
 
     @property
     def icon(self) -> str:

@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, EVT_CONNECTED, EVT_GROUPSTATE, EVT_SHADESTATE
+from .const import EVT_CONNECTED, EVT_GROUPSTATE, EVT_SHADESTATE
 from .controller import ESPSomfyController
 from .entity import ESPSomfyEntity
 
@@ -21,7 +21,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up shades for the shade controller."""
-    controller = hass.data[DOMAIN][config_entry.entry_id]
+    controller = config_entry.runtime_data
     new_entities = []
     data = controller.api.get_config()
     if "serverId" in data:

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -12,16 +14,14 @@ from .controller import ESPSomfyController
 class ESPSomfyEntity(CoordinatorEntity[ESPSomfyController], Entity):
     """Base entity for the ESPSomfy controller."""
 
-    def __init__(self, *, data: any, controller: ESPSomfyController) -> None:
+    # Intégration purement push : CoordinatorEntity le définit déjà, explicite ici.
+    _attr_should_poll = False
+
+    def __init__(self, *, data: Any, controller: ESPSomfyController) -> None:
         """Initialize the entity."""
         super().__init__(coordinator=controller)
         self.controller = controller
         self._data = data # Stockage des données (contient shadeId ou groupId le cas échéant)
-
-    @property
-    def should_poll(self) -> bool:
-        """Indicates that the entity should not poll."""
-        return False
 
     @property
     def device_info(self) -> DeviceInfo | None:

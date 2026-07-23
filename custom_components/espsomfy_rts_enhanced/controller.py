@@ -3,19 +3,17 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from datetime import datetime
 from functools import partial
 import json
 import logging
 import os
-import threading
-from threading import Timer
 from typing import Any
 
 import aiofiles
 import aiohttp
 from packaging.version import parse as version_parse
-import websocket
 
 from homeassistant.const import CONF_HOST, CONF_PIN, CONF_USERNAME
 from homeassistant.core import HomeAssistant
@@ -53,157 +51,109 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-logging.getLogger("websocket").setLevel(logging.CRITICAL)
+
+WS_HEARTBEAT = 20
+WS_RECONNECT_MAX_DELAY = 20
 
 
-class SocketListener(threading.Thread):
-    """A listener of sockets."""
+class SocketListener:
+    """Async websocket listener for ESPSomfy-RTS events.
+
+    Tourne entièrement dans l'event loop via aiohttp (protocole validé
+    contre le boîtier) — remplace l'ancien thread websocket-client.
+    """
 
     def __init__(
         self, hass: HomeAssistant, url: str, onpacket, onopen, onclose, onerror
     ) -> None:
         """Initialize a new socket listener."""
-        super().__init__()
+        self.hass = hass
         self.url = url
         self.onpacket = onpacket
         self.onopen = onopen
         self.onclose = onclose
         self.onerror = onerror
         self.connected = False
-        self.main_loop = None
-        self.ws_app = None
-        self.hass = hass
-        self._should_stop = False
-        self.filter = None
-        self.running_future = None
+        self.filter: list[str] | None = None
         self.reconnects = 0
-        self._connect_timer = None
-
-    def __enter__(self):
-        """Start the thread."""
-        self.start()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Stop and join the thread."""
-        self.stop()
-
-    def stop(self):
-        """Cancel event stream and join the thread."""
-        _LOGGER.debug("Stopping event thread")
-        self._should_stop = True
-        if self._connect_timer is not None:
-            self._connect_timer.cancel()
-            self._connect_timer = None
-        if self.ws_app:  # and self.connected:
-            self.ws_app.close()
-
-        _LOGGER.debug("Joining event thread")
-        if self.is_alive():
-            self.join()
-        _LOGGER.debug("Event thread joined")
-
-    async def connect(self):
-        """Start up the web socket."""
-        self.main_loop = asyncio.get_event_loop()
-        self.ws_app = websocket.WebSocketApp(
-            self.url,
-            on_message=self.ws_onmessage,
-            on_error=self.ws_onerror,
-            on_close=self.ws_onclose,
-            on_open=self.ws_onopen,
-            keep_running=True,
-        )
-        self.main_loop.run_in_executor(None, self.ws_begin)
-
-    def reconnect(self):
-        """Reconnect to the web socket."""
-        if self._should_stop:
-            return
-        if self._connect_timer is not None:
-            self._connect_timer.cancel()
-        self.reconnects = self.reconnects + 1
-        self.main_loop = asyncio.get_event_loop()
-        try:
-            self.ws_app = websocket.WebSocketApp(
-                self.url,
-                on_message=self.ws_onmessage,
-                on_error=self.ws_onerror,
-                on_close=self.ws_onclose,
-                on_open=self.ws_onopen,
-                keep_running=True,
-            )
-            self.main_loop.run_in_executor(None, self.ws_begin)
-            self._connect_timer = None
-            self.connected = True
-
-        except websocket.WebSocketAddressException:
-            self._connect_timer = Timer(
-                min(10 * self.reconnects / 2, 20), self.reconnect
-            )
-            self._connect_timer.start()
-        except websocket.WebSocketTimeoutException:
-            self._connect_timer = Timer(
-                min(10 * self.reconnects / 2, 20), self.reconnect
-            )
-            self._connect_timer.start()
-        except websocket.WebSocketConnectionClosedException:
-            self._connect_timer = Timer(
-                min(10 * self.reconnects / 2, 20), self.reconnect
-            )
-            self._connect_timer.start()
+        self._task: asyncio.Task | None = None
+        self._closing = False
 
     def set_filter(self, arr: Any) -> None:
         """Filter for the events."""
         self.filter = arr.copy()
 
-    def close(self) -> None:
-        """Synonym for stop."""
-        self.stop()
+    async def connect(self) -> None:
+        """Start the websocket listener task."""
+        self._closing = False
+        self._task = self.hass.async_create_background_task(
+            self._run(), name=f"espsomfy_rts_ws_{self.url}"
+        )
 
-    def ws_begin(self) -> None:
-        """Begin the socket."""
-        self.running_future = self.ws_app.run_forever(ping_interval=20, ping_timeout=15)
-        # print("Fell out of run_runforever")
-        if not self._should_stop:
-            self.hass.loop.call_soon_threadsafe(self.reconnect)
-
-    def ws_onerror(self, wsapp, exception):
-        """Socket error."""
-        # print(f"We have an error {exception}")
-        self.hass.loop.call_soon_threadsafe(self.onerror, exception)
-
-    def ws_onclose(self, wsapp, status, msg):
-        """Socket closed."""
-        # print(f"The socket was closed {status}")
+    async def close(self) -> None:
+        """Stop the listener and wait for the task to finish."""
+        self._closing = True
+        if self._task is not None:
+            self._task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._task
+            self._task = None
         self.connected = False
-        if not self._should_stop:
-            self.hass.loop.call_soon_threadsafe(self.onclose)
 
-    def ws_onopen(self, wsapp):
-        """Open the socket."""
-        self.connected = True
-        self.hass.loop.call_soon_threadsafe(self.onopen)
+    async def _run(self) -> None:
+        """Maintain the websocket connection, reconnecting with backoff."""
+        session = aiohttp_client.async_get_clientsession(self.hass)
+        while not self._closing:
+            try:
+                async with session.ws_connect(
+                    self.url, heartbeat=WS_HEARTBEAT
+                ) as ws:
+                    _LOGGER.debug("ESPSomfy-RTS socket connected to %s", self.url)
+                    self.connected = True
+                    self.reconnects = 0
+                    self.onopen()
+                    async for msg in ws:
+                        if msg.type == aiohttp.WSMsgType.TEXT:
+                            self._process_message(msg.data)
+                        elif msg.type == aiohttp.WSMsgType.ERROR:
+                            break
+            except asyncio.CancelledError:
+                raise
+            except (aiohttp.ClientError, OSError, TimeoutError) as ex:
+                if not self._closing:
+                    _LOGGER.debug("ESPSomfy-RTS socket error: %s", ex)
+                    self.onerror(ex)
+            if self._closing:
+                break
+            if self.connected:
+                self.connected = False
+                self.onclose()
+            self.reconnects += 1
+            delay = min(2 * self.reconnects, WS_RECONNECT_MAX_DELAY)
+            _LOGGER.debug(
+                "ESPSomfy-RTS socket disconnected, reconnect #%s in %ss",
+                self.reconnects,
+                delay,
+            )
+            await asyncio.sleep(delay)
+        self.connected = False
 
-    def ws_onmessage(self, wsapp, message: str):
-        """Process the incoming message."""
+    def _process_message(self, message: str) -> None:
+        """Process an incoming text frame (socket.io-like framing)."""
         try:
-            if message is None:
-                _LOGGER.debug("Got an empty socket payload")
-            elif message.startswith("42["):
+            if message.startswith("42["):
                 ndx = message.find(",")
                 event = message[3:ndx]
                 if not self.filter or event in self.filter:
-                    payload = message[ndx + 1 : -1]
-                    # print(f"Event:{event} Payload:{payload}")
-                    data = json.loads(payload)
+                    data = json.loads(message[ndx + 1 : -1])
                     data["event"] = event
-                    self.hass.loop.call_soon_threadsafe(self.onpacket, data)
+                    self.onpacket(data)
             elif message.lower() == "connected":
-                self.reconnects = 0
                 self.connected = True
-        except Exception as e:
-            _LOGGER.debug("Error processing websocket message: %s", e)
-            raise
+        except ValueError as ex:
+            _LOGGER.debug(
+                "Error processing websocket message %.80r: %s", message, ex
+            )
 
 
 class ESPSomfyController(DataUpdateCoordinator):
@@ -271,12 +221,12 @@ class ESPSomfyController(DataUpdateCoordinator):
     async def ws_close(self) -> None:
         """Close the tasks and sockets."""
         if self.ws_listener is not None:
-            self.ws_listener.close()
+            await self.ws_listener.close()
 
     async def ws_connect(self):
         """Connect to WebSocket."""
         if self.ws_listener is not None:
-            self.ws_listener.close()
+            await self.ws_listener.close()
         self.ws_listener = SocketListener(
             self.hass,
             self.api.get_sock_url(),
@@ -320,7 +270,7 @@ class ESPSomfyController(DataUpdateCoordinator):
         if self.api.get_host() != host:
             # Tear down the socket
             self.api.set_host(host)
-            self.ws_connect()
+            await self.ws_connect()
 
     def ws_onpacket(self, data):
         """Packet from the websocket."""

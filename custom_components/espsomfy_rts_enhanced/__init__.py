@@ -16,8 +16,10 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntry
 
-from .const import DOMAIN, PLATFORMS
+from .const import PLATFORMS
 from .controller import ESPSomfyAPI, ESPSomfyController, LoginError
+
+type ESPSomfyConfigEntry = ConfigEntry[ESPSomfyController]
 
 
 class ESPSomfyRTSEntityFeature(IntFlag):
@@ -27,12 +29,12 @@ class ESPSomfyRTSEntityFeature(IntFlag):
     BACKUP = 2
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: ESPSomfyConfigEntry) -> bool:
     """Set up ESPSomfy-RTS from a config entry."""
     api = ESPSomfyAPI(hass, entry.entry_id, entry.data)
     controller = ESPSomfyController(entry.entry_id, hass, api)
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = controller
+    entry.runtime_data = controller
 
     # 1. On récupère la configuration initiale du boîtier
     await api.get_initial()
@@ -102,17 +104,12 @@ async def _async_migrate_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> 
 
     await er.async_migrate_entries(hass, entry.entry_id, _migrate)
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ESPSomfyConfigEntry) -> bool:
     """Unload a config entry."""
-    controller: ESPSomfyController = hass.data[DOMAIN].get(entry.entry_id)
+    controller: ESPSomfyController | None = getattr(entry, "runtime_data", None)
     if controller is not None:
         await controller.ws_close()
-        # 🟢 Simplification conforme aux normes récentes de HA pour le déchargement
-        if unload_ok := await hass.config_entries.async_unload_platforms(
-            entry, PLATFORMS
-        ):
-            hass.data[DOMAIN].pop(entry.entry_id)
-        return unload_ok
+        return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     return True
 
 

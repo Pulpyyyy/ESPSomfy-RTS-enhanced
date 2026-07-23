@@ -22,7 +22,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import ESPSomfyRTSEntityFeature
-from .const import API_REBOOT, DOMAIN, EVT_CONNECTED
+from .const import API_REBOOT, EVT_CONNECTED
 from .controller import ESPSomfyController
 from .entity import ESPSomfyEntity
 
@@ -44,15 +44,8 @@ def _rotate_backups(backup_dir: str) -> None:
         os.remove(file_path)
 
 
-@dataclass
-class ESPSomfyButtonDescriptionMixin:
-    """Mixin for entity description."""
-
-
-@dataclass
-class ESPSomfyButtonDescription(
-    ButtonEntityDescription, ESPSomfyButtonDescriptionMixin
-):
+@dataclass(frozen=True, kw_only=True)
+class ESPSomfyButtonDescription(ButtonEntityDescription):
     """A base class descriptor for a button entity."""
 
     id: str | None = None
@@ -68,7 +61,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up ESPSomfy-RTS update based on a config entry."""
     new_entities = []
-    controller: ESPSomfyController = hass.data[DOMAIN][config_entry.entry_id]
+    controller: ESPSomfyController = config_entry.runtime_data
     v = version_parse(controller.version)
     if v >= Version("2.3.0"):
         new_entities.append(

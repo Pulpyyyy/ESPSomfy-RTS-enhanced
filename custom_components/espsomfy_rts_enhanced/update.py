@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, EVT_CONNECTED, EVT_FWSTATUS, EVT_UPDPROGRESS
+from .const import EVT_CONNECTED, EVT_FWSTATUS, EVT_UPDPROGRESS
 from .controller import ESPSomfyController
 from .entity import ESPSomfyEntity
 
@@ -27,7 +27,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up ESPSomfy RTS update based on a config entry."""
-    controller: ESPSomfyController = hass.data[DOMAIN][config_entry.entry_id]
+    controller: ESPSomfyController = config_entry.runtime_data
     data = controller.api.get_config()
     if "serverId" in data:
         async_add_entities([ESPSomfyRTSUpdateEntity(controller=controller)])

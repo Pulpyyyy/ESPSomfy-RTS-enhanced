@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import statistics
 import time
+from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -21,18 +22,18 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, EVT_CONNECTED, EVT_ETHERNET, EVT_MEMSTATUS, EVT_WIFISTRENGTH
+from .const import EVT_CONNECTED, EVT_ETHERNET, EVT_MEMSTATUS, EVT_WIFISTRENGTH
 from .controller import ESPSomfyController
 from .entity import ESPSomfyEntity
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class ESPSomfyDiagSensorDescription(SensorEntityDescription):
     """A base class descriptor for a sensor entity."""
 
     id: str | None = None
     events: dict | None = None
-    native_value: any | None = None
+    native_value: Any | None = None
     min_interval: int = 0
     value_count: int = 1
 
@@ -44,7 +45,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up shades for the shade controller."""
 
-    controller = hass.data[DOMAIN][config_entry.entry_id]
+    controller = config_entry.runtime_data
     new_entities = []
     data = controller.api.get_config()
     if "serverId" in data:
@@ -257,7 +258,7 @@ class ESPSomfyDiagSensor(ESPSomfyEntity, SensorEntity):
     """A diagnostic entity for the hub."""
 
     def __init__(
-        self, *, controller: ESPSomfyController, cfg: ESPSomfyDiagSensorDescription, data: any
+        self, *, controller: ESPSomfyController, cfg: ESPSomfyDiagSensorDescription, data: Any
     ) -> None:
         """Initialize a new diagnostic sensor."""
         super().__init__(data=data, controller=controller)
@@ -330,7 +331,7 @@ class ESPSomfyDiagSensor(ESPSomfyEntity, SensorEntity):
 class ESPSomfyWifiStrengthSensor(ESPSomfyDiagSensor):
     """A wifi strength sensor indicating the current connection strength."""
 
-    def __init__(self, *, controller: ESPSomfyController, data: any) -> None:
+    def __init__(self, *, controller: ESPSomfyController, data: Any) -> None:
         """Initialize a new Wifi strength Sensor."""
         super().__init__(
             controller=controller,
@@ -350,8 +351,3 @@ class ESPSomfyWifiStrengthSensor(ESPSomfyDiagSensor):
             data=data,
         )
         self._available = True
-
-    @property
-    def should_poll(self) -> bool:
-        """Indicates that the sensor should not poll."""
-        return False
