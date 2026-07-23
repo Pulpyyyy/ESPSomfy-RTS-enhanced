@@ -135,7 +135,7 @@
       "min_memory": {
         "name": "Memoria mínima"
       },
-      "ip_addresss": {
+      "ip_address": {
         "name": "Dirección IP"
       }
     },

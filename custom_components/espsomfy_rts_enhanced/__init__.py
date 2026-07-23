@@ -11,8 +11,9 @@ from homeassistant.const import (
     CONF_USERNAME,
     EVENT_HOMEASSISTANT_STOP,
 )
-from homeassistant.core import Event, HomeAssistant
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntry
 
 from .const import DOMAIN, PLATFORMS
@@ -57,6 +58,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.config_entries.async_update_entry(entry, title=api.deviceName)
 
+    # Migration des unique_id historiques (typo "ip_addresss" corrigé en v3.0.2),
+    # à faire avant le chargement des plateformes pour ne pas orpheliner l'entité.
+    await _async_migrate_unique_ids(hass, entry)
+
     # 3. Les plateformes ne sont chargées qu'une fois le login réussi, sinon un
     #    échec après forward provoquait un double chargement au retry.
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -80,6 +85,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload the config entry when its data is updated."""
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def _async_migrate_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Migrate legacy entity unique ids to their corrected form."""
+
+    @callback
+    def _migrate(reg_entry: er.RegistryEntry) -> dict[str, str] | None:
+        if reg_entry.unique_id.startswith("ip_addresss_"):
+            return {
+                "new_unique_id": reg_entry.unique_id.replace(
+                    "ip_addresss_", "ip_address_", 1
+                )
+            }
+        return None
+
+    await er.async_migrate_entries(hass, entry.entry_id, _migrate)
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""

@@ -832,23 +832,32 @@ class ESPSomfyAPI:
             _LOGGER.debug("ESPSomfy-RTS initial discovery failed: %s", ex)
 
     async def fetch_release_notes(self, version: str) -> str | None:
-        """Télécharge les notes de version depuis l'API GitHub."""
+        """Fetch the release notes from the GitHub API.
+
+        Returns None on failure: HA then falls back to the release_url link
+        instead of showing an error string as release notes.
+        """
         url = f"https://api.github.com/repos/Pulpyyyy/ESPSomfy-RTS/releases/tags/{version}"
         headers = {
             "Accept": "application/vnd.github.v3+json",
-            "User-Agent": "HomeAssistant-ESPSomfyRTS-Integration" # 🟢 Ajout pour éviter les rejets de l'API GitHub
+            "User-Agent": "HomeAssistant-ESPSomfyRTS-Integration",  # évite les rejets de l'API GitHub
         }
 
         try:
-            async with self._session.get(url, headers=headers, timeout=10) as response:
+            async with self._session.get(
+                url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    # Extrait le texte au format Markdown
-                    return data.get("body", "Aucune description disponible.")
-                return f"Impossible de charger les notes (Code GitHub : {response.status})"
-        except Exception as e:
-            _LOGGER.error("Erreur notes de version : %s", e)
-            return "Erreur lors de la récupération des notes de version."
+                    return data.get("body") or None
+                _LOGGER.warning(
+                    "Could not fetch release notes for %s (GitHub status %s)",
+                    version,
+                    response.status,
+                )
+        except (aiohttp.ClientError, TimeoutError) as e:
+            _LOGGER.warning("Could not fetch release notes for %s: %s", version, e)
+        return None
 
 
 class InvalidHost(HomeAssistantError):

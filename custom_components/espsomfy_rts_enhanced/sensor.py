@@ -238,8 +238,8 @@ async def async_setup_entry(
             ESPSomfyDiagSensor(
                 controller=controller,
                 cfg=ESPSomfyDiagSensorDescription(
-                    key="ip_addresss",
-                    translation_key="ip_addresss",
+                    key="ip_address",
+                    translation_key="ip_address",
                     entity_category=EntityCategory.DIAGNOSTIC,
                     has_entity_name=True,
                     icon="mdi:ip",
