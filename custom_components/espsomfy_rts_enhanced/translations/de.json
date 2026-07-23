@@ -2,7 +2,8 @@
   "config": {
     "abort": {
       "no_devices_found": "Keine Geräte im Netzwerk gefunden",
-      "single_instance_allowed": "Bereits konfiguriert. Es ist nur eine einzige Konfiguration möglich."
+      "single_instance_allowed": "Bereits konfiguriert. Es ist nur eine einzige Konfiguration möglich.",
+      "reauth_successful": "Die erneute Authentifizierung war erfolgreich"
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen",
@@ -43,6 +44,15 @@
         },
         "description": "Möchten Sie {model} mit der Server-ID {server_id} zu Home Assistant hinzufügen?",
         "title": "ESPSomfy-RTS entdeckt"
+      },
+      "reauth_confirm": {
+        "title": "ESPSomfy RTS neu authentifizieren",
+        "description": "Das Gerät hat die gespeicherten Zugangsdaten abgelehnt. Geben Sie die aktuellen Sicherheitsoptionen Ihres Geräts ein.",
+        "data": {
+          "username": "Benutzername",
+          "password": "Passwort",
+          "pin": "PIN-Code"
+        }
       }
     }
   },

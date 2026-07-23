@@ -5,35 +5,25 @@ from __future__ import annotations
 import voluptuous as vol
 
 from homeassistant.components.device_automation import (
-    async_get_entity_registry_entry_or_raise,
     async_validate_entity_schema,
     toggle_entity,
 )
 from homeassistant.const import (
     ATTR_ENTITY_ID,
-    ATTR_MODE,
     CONF_DEVICE_ID,
     CONF_DOMAIN,
     CONF_ENTITY_ID,
     CONF_TYPE,
 )
 from homeassistant.core import Context, HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import get_capability
 from homeassistant.helpers.typing import ConfigType, TemplateVarsType
 
-from .const import ATTR_AVAILABLE_MODES, ATTR_RESTOREFILE, DOMAIN
+from .const import DOMAIN
 
-RESTORE_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
-    {
-        vol.Required(CONF_TYPE): "restore",
-        vol.Required(CONF_ENTITY_ID): cv.entity_id_or_uuid,
-        vol.Required(ATTR_RESTOREFILE): vol.Coerce(int),
-    }
-)
-
+# NOTE: l'action "restore" de l'amont rstrouse n'a jamais été terminée (schéma
+# jamais enregistré, branche d'exécution commentée là-bas aussi) — retirée ici.
 
 ONOFF_SCHEMA = toggle_entity.ACTION_SCHEMA.extend({vol.Required(CONF_DOMAIN): DOMAIN})
 
@@ -119,22 +109,4 @@ async def async_get_action_capabilities(
     hass: HomeAssistant, config: ConfigType
 ) -> dict[str, vol.Schema]:
     """List action capabilities."""
-    action_type = config[CONF_TYPE]
-    fields = {}
-    if action_type == "restore":
-        fields[vol.Required(ATTR_RESTOREFILE)] = vol.Required()
-    elif action_type == "backup":
-        try:
-            entry = async_get_entity_registry_entry_or_raise(
-                hass, config[CONF_ENTITY_ID]
-            )
-            available_modes = (
-                get_capability(hass, entry.entity_id, ATTR_AVAILABLE_MODES) or []
-            )
-        except HomeAssistantError:
-            available_modes = []
-        fields[vol.Required(ATTR_MODE)] = vol.In(available_modes)
-    else:
-        return {}
-
-    return {"extra_fields": vol.Schema(fields)}
+    return {}

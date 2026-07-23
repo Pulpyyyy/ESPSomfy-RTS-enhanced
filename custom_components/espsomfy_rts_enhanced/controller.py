@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
+from functools import partial
 import json
 import logging
 import os
@@ -16,14 +17,12 @@ import aiohttp
 from packaging.version import parse as version_parse
 import websocket
 
-from homeassistant.components.cover import CoverDeviceClass, CoverEntityFeature
-from homeassistant.const import CONF_HOST, CONF_PIN, CONF_USERNAME, Platform
+from homeassistant.const import CONF_HOST, CONF_PIN, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import (
     aiohttp_client,
     device_registry as dr,
-    entity_registry as er,
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -51,7 +50,6 @@ from .const import (
     EVT_SHADESTATE,
     EVT_UPDPROGRESS,
     EVT_WIFISTRENGTH,
-    PLATFORMS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -93,6 +91,9 @@ class SocketListener(threading.Thread):
         """Cancel event stream and join the thread."""
         _LOGGER.debug("Stopping event thread")
         self._should_stop = True
+        if self._connect_timer is not None:
+            self._connect_timer.cancel()
+            self._connect_timer = None
         if self.ws_app:  # and self.connected:
             self.ws_app.close()
 
@@ -116,6 +117,8 @@ class SocketListener(threading.Thread):
 
     def reconnect(self):
         """Reconnect to the web socket."""
+        if self._should_stop:
+            return
         if self._connect_timer is not None:
             self._connect_timer.cancel()
         self.reconnects = self.reconnects + 1
@@ -199,7 +202,7 @@ class SocketListener(threading.Thread):
                 self.reconnects = 0
                 self.connected = True
         except Exception as e:
-            _LOGGER.debug(e.message)
+            _LOGGER.debug("Error processing websocket message: %s", e)
             raise
 
 
@@ -319,92 +322,12 @@ class ESPSomfyController(DataUpdateCoordinator):
             self.api.set_host(host)
             self.ws_connect()
 
-    def ensure_group_configured(self, data):
-        """Ensure the group exists on Home Assistant."""
-        uuid = f"{self.unique_id}_group{data['groupId']}"
-        entities = er.async_get(self.hass)
-
-        for entity in er.async_entries_for_config_entry(entities, self.config_entry_id):
-            if entity.unique_id == uuid:
-                return
-
-        dev_features = (
-            CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP
-        )
-        dev_class = CoverDeviceClass.SHADE
-
-        # 🟢 CORRECTION : On ne force plus device_id pour laisser HA générer l'appareil
-        # basé sur le DeviceInfo de la classe de l'entité.
-        entities.async_get_or_create(
-            domain=DOMAIN,
-            platform=Platform.COVER,
-            original_device_class=dev_class,
-            unique_id=uuid,
-            original_name=data["name"],
-            suggested_object_id=f"{str(data['name']).lower().replace(' ', '_')}",
-            supported_features=dev_features,
-        )
-
-    def ensure_shade_configured(self, data):
-        """Ensure the shade exists on Home Assistant."""
-        uuid = f"{self.unique_id}_{data['shadeId']}"
-        entities = er.async_get(self.hass)
-
-        for entity in er.async_entries_for_config_entry(entities, self.config_entry_id):
-            if entity.unique_id == uuid:
-                return
-
-        dev_features = (
-            CoverEntityFeature.OPEN
-            | CoverEntityFeature.CLOSE
-            | CoverEntityFeature.STOP
-            | CoverEntityFeature.SET_POSITION
-        )
-
-        dev_class = CoverDeviceClass.SHADE
-        if "shadeType" in data:
-            match int(data["shadeType"]):
-                case 1:
-                    dev_class = CoverDeviceClass.BLIND
-                    if "tiltType" in data:
-                        match int(data["tiltType"]):
-                            case 1 | 2:
-                                dev_features |= (
-                                    CoverEntityFeature.OPEN_TILT
-                                    | CoverEntityFeature.CLOSE_TILT
-                                    | CoverEntityFeature.SET_TILT_POSITION
-                                )
-                    elif "hasTilt" in data and data["hasTilt"] is True:
-                        dev_features |= (
-                            CoverEntityFeature.OPEN_TILT
-                            | CoverEntityFeature.CLOSE_TILT
-                            | CoverEntityFeature.SET_TILT_POSITION
-                        )
-                case 2 | 7 | 8:
-                    dev_class = CoverDeviceClass.CURTAIN
-                case 3:
-                    dev_class = CoverDeviceClass.AWNING
-                case _:
-                    dev_class = CoverDeviceClass.SHADE
-
-        # 🟢 CORRECTION : Retrait du device_id en dur pour permettre la création de l'appareil dédié
-        entities.async_get_or_create(
-            domain=DOMAIN,
-            platform=Platform.COVER,
-            original_device_class=dev_class,
-            unique_id=uuid,
-            original_name=data["name"],
-            suggested_object_id=f"{str(data['name']).lower().replace(' ', '_')}",
-            supported_features=dev_features,
-        )
-
     def ws_onpacket(self, data):
         """Packet from the websocket."""
-        # Below doesn't work.  Near as I can tell there is no
-        # real way of adding an entity on the fly.  All this
-        # does is add an entity that is not really attached.
-        # if data["event"] == EVT_SHADEADDED:
-        #    self.ensure_shade_configured(data)
+        # NOTE: l'ajout d'entités à la volée sur EVT_SHADEADDED (ensure_*_configured
+        # dans l'amont rstrouse) était une impasse assumée : l'entité créée dans le
+        # registre n'est pas réellement attachée à la plateforme. Un reload de
+        # l'intégration reste nécessaire pour un nouveau volet/groupe.
 
         # Catch the fwStatus messages before they go anywhere
         # this will allow us to simply update the latest firmware
@@ -637,7 +560,9 @@ class ESPSomfyAPI:
                     )
                     return False
 
-                os.makedirs(self.backup_dir, exist_ok=True)
+                await self.hass.async_add_executor_job(
+                    partial(os.makedirs, self.backup_dir, exist_ok=True)
+                )
 
                 data = await resp.text(encoding=None)
                 local_dt = dt_util.as_local(datetime.now(dt_util.UTC))
@@ -723,7 +648,9 @@ class ESPSomfyAPI:
 
     async def load_shades(self) -> Any | None:
         """Load all the shades from the controller."""
-        async with self._session.get(f"{self._api_url}{API_SHADES}") as resp:
+        async with self._session.get(
+            f"{self._api_url}{API_SHADES}", headers=self._headers
+        ) as resp:
             if resp.status == 200:
                 self._config["shades"] = await resp.json()
                 return self._config["shades"]
@@ -731,7 +658,9 @@ class ESPSomfyAPI:
 
     async def load_groups(self) -> Any | None:
         """Load all the groups from the controller."""
-        async with self._session.get(f"{self._api_url}{API_GROUPS}") as resp:
+        async with self._session.get(
+            f"{self._api_url}{API_GROUPS}", headers=self._headers
+        ) as resp:
             if resp.status == 200:
                 self._config["groups"] = await resp.json()
                 return self._config["groups"]
@@ -831,7 +760,9 @@ class ESPSomfyAPI:
 
     async def put_command(self, command, data):
         """Send a put command to the device."""
-        async with self._session.put(f"{self._api_url}{command}", json=data) as resp:
+        async with self._session.put(
+            f"{self._api_url}{command}", json=data, headers=self._headers
+        ) as resp:
             if resp.status == 200:
                 pass
             else:
@@ -860,12 +791,12 @@ class ESPSomfyAPI:
 
                 else:
                     _LOGGER.error("Error logging in: %s", await resp.text())
-                    raise LoginError(f"{self._api_url} - {await resp.text()}")
+                    raise LoginError(CONF_HOST, "login_error")
 
     async def group_command(self, data):
         """Send commands to ESPSomfy-RTS via PUT request."""
         async with self._session.put(
-            f"{self._api_url}{API_GROUPCOMMAND}", json=data
+            f"{self._api_url}{API_GROUPCOMMAND}", json=data, headers=self._headers
         ) as resp:
             if resp.status == 200:
                 pass
@@ -875,7 +806,7 @@ class ESPSomfyAPI:
     async def tilt_command(self, data):
         """Send tilt commands to ESPSomfy-RTS via PUT request."""
         async with self._session.put(
-            f"{self._api_url}{API_TILTCOMMAND}", json=data
+            f"{self._api_url}{API_TILTCOMMAND}", json=data, headers=self._headers
         ) as resp:
             if resp.status == 200:
                 pass
@@ -883,26 +814,22 @@ class ESPSomfyAPI:
                 _LOGGER.error(await resp.text())
 
     async def get_initial(self):
-        """Get the initial config from ESPSomfy-RTS."""
+        """Get the initial config from ESPSomfy-RTS.
+
+        Le chargement des plateformes est fait par async_setup_entry après le
+        login : le faire ici provoquait un double forward en cas de retry.
+        """
         try:
             self._session = aiohttp_client.async_get_clientsession(self.hass)
             async with self._session.get(f"{self._api_url}{API_DISCOVERY}") as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     self.apply_data(data)
-                    entry = self.hass.config_entries.async_get_entry(
-                        self._config_entry_id
-                    )
-                    if not self._configured:
-                        _LOGGER.debug("ESPSomfy-RTS Setting up entities")
-                        await self.hass.config_entries.async_forward_entry_setups(
-                            entry, PLATFORMS
-                        )
-                        self._configured = True
+                    self._configured = True
                 else:
                     _LOGGER.error(await resp.text())
-        except aiohttp.ClientError:
-            pass
+        except aiohttp.ClientError as ex:
+            _LOGGER.debug("ESPSomfy-RTS initial discovery failed: %s", ex)
 
     async def fetch_release_notes(self, version: str) -> str | None:
         """Télécharge les notes de version depuis l'API GitHub."""

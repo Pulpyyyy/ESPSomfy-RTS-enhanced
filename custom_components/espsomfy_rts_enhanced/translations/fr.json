@@ -2,7 +2,8 @@
   "config": {
     "abort": {
       "no_devices_found": "Aucun appareil trouvé sur le réseau",
-      "single_instance_allowed": "Déjà configuré. Seule une configuration unique est possible."
+      "single_instance_allowed": "Déjà configuré. Seule une configuration unique est possible.",
+      "reauth_successful": "La réauthentification a réussi"
     },
     "error": {
       "cannot_connect": "Échec de la connexion",
@@ -43,6 +44,15 @@
         },
         "description": "Voulez-vous ajouter {model} avec l'identifiant du serveur {server_id} à Home Assistant ?",
         "title": "ESPSomfy-RTS Découvert"
+      },
+      "reauth_confirm": {
+        "title": "Réauthentifier ESPSomfy RTS",
+        "description": "Le boîtier a rejeté les identifiants enregistrés. Saisissez les options de sécurité actuelles de votre appareil.",
+        "data": {
+          "username": "Nom d'utilisateur",
+          "password": "Mot de passe",
+          "pin": "Code PIN"
+        }
       }
     }
   },

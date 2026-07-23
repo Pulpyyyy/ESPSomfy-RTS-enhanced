@@ -2,10 +2,9 @@
 
 from homeassistant.const import Platform
 
-VERSION = "v3.0.0"
+VERSION = "v3.0.1"
 DOMAIN = "espsomfy_rts_enhanced"
 MANUFACTURER = "Pulpyyyy"
-API_CONTROLLER = "/controller"
 API_SHADES = "/shades"
 API_GROUPS = "/groups"
 API_SHADECOMMAND = "/shadeCommand"
@@ -17,8 +16,6 @@ API_SETPOSITIONS = "/setPositions"
 API_SETSENSOR = "/setSensor"
 API_BACKUP = "/backup"
 API_REBOOT = "/reboot"
-API_RESTORE = "/restore"
-EVT_CONTROLLER = "controller"
 EVT_SHADESTATE = "shadeState"
 EVT_GROUPSTATE = "groupState"
 EVT_SHADECOMMAND = "shadeCommand"
@@ -30,9 +27,6 @@ EVT_UPDPROGRESS = "updateProgress"
 EVT_WIFISTRENGTH = "wifiStrength"
 EVT_ETHERNET = "ethernet"
 EVT_MEMSTATUS = "memStatus"
-
-ATTR_RESTOREFILE = "Restore File"
-ATTR_AVAILABLE_MODES = "???"
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,

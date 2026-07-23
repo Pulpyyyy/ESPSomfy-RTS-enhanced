@@ -12,7 +12,7 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import Event, HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.device_registry import DeviceEntry
 
 from .const import DOMAIN, PLATFORMS
@@ -41,7 +41,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
     # 2. Authentification auprès du boîtier : sans ce login l'apikey reste vide
-    #    et tous les appels REST authentifiés (backup, etc.) renvoient 401.
+    #    et tous les appels REST authentifiés renvoient 401.
     try:
         await api.login(
             {
@@ -51,11 +51,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             }
         )
     except LoginError as ex:
-        raise ConfigEntryNotReady(
-            f"Could not log in to ESPSomfy-RTS device at {api.get_api_url()}: {ex}"
+        raise ConfigEntryAuthFailed(
+            f"Could not log in to ESPSomfy-RTS device at {api.get_api_url()}"
         ) from ex
 
     hass.config_entries.async_update_entry(entry, title=api.deviceName)
+
+    # 3. Les plateformes ne sont chargées qu'une fois le login réussi, sinon un
+    #    échec après forward provoquait un double chargement au retry.
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     async def _async_ws_close(_: Event) -> None:
         await controller.ws_close()
@@ -64,11 +68,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.async_on_unload(
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_ws_close)
     )
+    # Reload automatique quand l'hôte ou les identifiants changent via le flow d'options
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
-    # 3. On lance la connexion WebSocket (qui chargera les plateformes au moment opportun)
+    # 4. On lance la connexion WebSocket
     await controller.ws_connect()
 
     return True
+
+
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload the config entry when its data is updated."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""

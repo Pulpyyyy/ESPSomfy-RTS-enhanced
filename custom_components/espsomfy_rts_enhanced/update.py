@@ -161,7 +161,8 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
         if backup:
             success = await self._controller.create_backup()
         if success:
-            version = cast(str, self.latest_version)
+            # Honore la version demandée (SPECIFIC_VERSION), sinon la dernière.
+            version = version or cast(str, self.latest_version)
             if version is not None:
                 await self.controller.update_firmware(version)
 

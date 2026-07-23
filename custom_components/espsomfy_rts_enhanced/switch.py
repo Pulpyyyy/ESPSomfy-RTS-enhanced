@@ -28,7 +28,7 @@ async def async_setup_entry(
         for shade in controller.api.shades:
             try:
                 if "shadeType" in shade and (
-                    int(shade["shadeType"]) == 9 or int(shade["shadeType"] == 10)
+                    int(shade["shadeType"]) == 9 or int(shade["shadeType"]) == 10
                 ):
                     new_entities.append(
                         ESPSomfyBinarySwitch(controller=controller, data=shade)

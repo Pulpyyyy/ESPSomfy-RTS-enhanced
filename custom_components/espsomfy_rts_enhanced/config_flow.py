@@ -18,7 +18,6 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
@@ -44,18 +43,6 @@ DATA_SCHEMA = vol.Schema(
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-
-async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
-    """Validate the user input allows us to connect."""
-
-    session = aiohttp_client.async_get_clientsession(hass)
-    async with session.get(f'http://{data["host"]}/discovery') as resp:
-        if resp.status == 200:
-            pass
-        else:
-            raise DiscoveryError(f"{await resp.text()}")
-    return {"title": "ESPSomfy-RTS", "server_id": "A1"}
 
 
 # The ConfigFlow is only accessed when first setting up the integration.  This simply
@@ -115,13 +102,16 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data=user_input,
                 )
             except InvalidHost:
-                errors[CONF_HOST] = "wrong_host"
+                errors[CONF_HOST] = "invalid_host"
             except ConnectionError:
                 errors["base"] = "cannot_connect"
             except DiscoveryError:
                 errors[CONF_HOST] = "discovery_error"
             except LoginError as ex:
-                errors[ex.args[0]] = ex.args[1]
+                if len(ex.args) >= 2:
+                    errors[ex.args[0]] = ex.args[1]
+                else:
+                    errors["base"] = "login_error"
         return self._show_setup_form(user_input=user_input, errors=errors)
 
     async def async_step_zeroconf(
@@ -176,6 +166,54 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
+    async def async_step_reauth(
+        self, entry_data: dict[str, Any]
+    ) -> FlowResult:
+        """Handle reauthentication when the device rejects the credentials."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Ask for new credentials and validate them against the device."""
+        errors: dict[str, Any] = {}
+        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        if user_input is not None and entry is not None:
+            data = {**entry.data, **user_input}
+            try:
+                api = ESPSomfyAPI(self.hass, 0, data)
+                await api.discover()
+                await api.login(
+                    {
+                        "username": data.get(CONF_USERNAME, ""),
+                        "password": data.get(CONF_PASSWORD, ""),
+                        "pin": data.get(CONF_PIN, ""),
+                    }
+                )
+                self.hass.config_entries.async_update_entry(entry, data=data)
+                await self.hass.config_entries.async_reload(entry.entry_id)
+                return self.async_abort(reason="reauth_successful")
+            except ConnectionError:
+                errors["base"] = "cannot_connect"
+            except DiscoveryError:
+                errors["base"] = "discovery_error"
+            except LoginError as ex:
+                if len(ex.args) >= 2:
+                    errors[ex.args[0]] = ex.args[1]
+                else:
+                    errors["base"] = "login_error"
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_USERNAME): str,
+                    vol.Optional(CONF_PASSWORD): str,
+                    vol.Optional(CONF_PIN): str,
+                }
+            ),
+            errors=errors,
+        )
+
     @staticmethod
     @callback
     def async_get_options_flow(
@@ -225,13 +263,16 @@ class ESPSomfyOptionsFlowHandler(config_entries.OptionsFlow):
                     data=user_input,
                 )
             except InvalidHost:
-                errors[CONF_HOST] = "wrong_host"
+                errors[CONF_HOST] = "invalid_host"
             except ConnectionError:
                 errors["base"] = "cannot_connect"
             except DiscoveryError:
                 errors[CONF_HOST] = "discovery_error"
             except LoginError as ex:
-                errors[ex.args[0]] = ex.args[1]
+                if len(ex.args) >= 2:
+                    errors[ex.args[0]] = ex.args[1]
+                else:
+                    errors["base"] = "login_error"
 
         return self.async_show_form(
             step_id="init",

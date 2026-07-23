@@ -303,7 +303,7 @@ class ESPSomfyGroup(CoverGroup, ESPSomfyEntity):
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
         if self._process_individual:
-            await super().async_open_cover(kwargs=kwargs)
+            await super().async_open_cover(**kwargs)
         elif self._flip_position:
             await self._controller.api.close_group(self._group_id)
         else:
@@ -312,7 +312,7 @@ class ESPSomfyGroup(CoverGroup, ESPSomfyEntity):
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
         if self._process_individual:
-            await super().async_close_cover(kwargs=kwargs)
+            await super().async_close_cover(**kwargs)
         elif self._flip_position:
             await self._controller.api.open_group(self._group_id)
         else:
@@ -504,6 +504,10 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
                 self._attr_current_cover_tilt_position = (
                     self.current_cover_tilt_position
                 )
+            # Les types toggle (garage 1-bouton, portails) exposent OPEN/CLOSE/STOP
+            # dynamiquement selon le mouvement en cours.
+            if self.is_toggle:
+                self.update_supported_features()
             self.async_write_ha_state()
 
     def _handle_state_command(self, data) -> None:

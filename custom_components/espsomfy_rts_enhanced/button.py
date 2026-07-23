@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-import os
 import glob
+import logging
+import os
 
-from packaging.version import parse as version_parse
+from packaging.version import Version, parse as version_parse
 
 from homeassistant.components.button import (
     ButtonDeviceClass,
@@ -27,6 +28,20 @@ from .entity import ESPSomfyEntity
 
 SVC_REBOOT = "reboot"
 SVC_BACKUP = "backup"
+
+MAX_BACKUPS = 5
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def _rotate_backups(backup_dir: str) -> None:
+    """Keep only the most recent MAX_BACKUPS files (blocking, run in executor)."""
+    if not os.path.exists(backup_dir):
+        return
+    files = glob.glob(os.path.join(backup_dir, "*.backup"))
+    files.sort(key=os.path.getmtime, reverse=True)
+    for file_path in files[MAX_BACKUPS:]:
+        os.remove(file_path)
 
 
 @dataclass
@@ -55,7 +70,7 @@ async def async_setup_entry(
     new_entities = []
     controller: ESPSomfyController = hass.data[DOMAIN][config_entry.entry_id]
     v = version_parse(controller.version)
-    if v.major >= 2 and v.minor >= 3 and v.micro >= 0:
+    if v >= Version("2.3.0"):
         new_entities.append(
             ESPSomfyButton(
                 controller=controller,
@@ -124,7 +139,7 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
         self._attr_unique_id = f"{cfg.key}_{controller.unique_id}"
         self._attr_entity_category = cfg.entity_category
         self._attr_icon = cfg.icon
-        self._available = True
+        self._attr_available = True
         self._action = cfg.action
         self._attr_assumed_state = True
         self._attr_supported_features = cfg.features
@@ -149,28 +164,16 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
             method = getattr(self._controller.api, self._action["apimethod"])
             await method()
 
-        # 2. 🟢 AJOUT : Si c'est le bouton backup, on gère la rotation des 5 fichiers
+        # 2. Si c'est le bouton backup, on garde au plus MAX_BACKUPS fichiers.
+        # Le dossier vient de l'API (ESPSomfyRTS_<serverId>), le même que celui
+        # où create_backup() écrit.
         if self.entity_description.key == "backup":
             try:
-                # On récupère le chemin du dossier des sauvegardes
-                # (S'adapte dynamiquement selon l'adresse définie dans ton contrôleur)
-                backup_dir = self.hass.config.path(f"ESPSomfyRTS_{self._controller.unique_id}")
-
-                if os.path.exists(backup_dir):
-                    # Trouver tous les fichiers .backup dans ce dossier
-                    files = glob.glob(os.path.join(backup_dir, "*.backup"))
-
-                    # Trier les fichiers par date de modification (du plus récent au plus vieux)
-                    files.sort(key=os.path.getmtime, reverse=True)
-
-                    # Si on a plus de 5 fichiers, on supprime les plus anciens
-                    if len(files) > 5:
-                        files_to_delete = files[5:]
-                        for file_path in files_to_delete:
-                            os.remove(file_path)
-            except Exception:
-                # Sécurité pour éviter de bloquer l'intégration en cas d'erreur de droits sur les fichiers
-                pass
+                await self.hass.async_add_executor_job(
+                    _rotate_backups, self._controller.api.backup_dir
+                )
+            except OSError as ex:
+                _LOGGER.warning("Could not rotate backup files: %s", ex)
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
@@ -180,8 +183,3 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
             ):
                 self._attr_available = bool(self._controller.data["connected"])
                 self.async_write_ha_state()
-
-    @property
-    def available(self) -> bool:
-        """Indicates whether the shade is available."""
-        return self._available
