@@ -239,7 +239,7 @@
         },
         "repeat": {
           "name": "Wiederholung",
-          "description": "Anzahl der Wiederholungen für den Befehl"
+          "description": "Anzahl der Wiederholungen für den Befehl. Leer lassen oder 0 setzen, um die am Motor konfigurierte Wiederholungsanzahl zu verwenden"
         }
       }
     },
@@ -257,7 +257,7 @@
         },
         "repeat": {
           "name": "Wiederholung",
-          "description": "Anzahl der Wiederholungen für den Befehl"
+          "description": "Anzahl der Wiederholungen für den Befehl. Leer lassen oder 0 setzen, um die am Motor konfigurierte Wiederholungsanzahl zu verwenden"
         }
       }
     },
@@ -267,7 +267,7 @@
     },
     "backup": {
       "name": "Sicherung erstellen",
-      "description": "Löst eine Sicherung der ESPSomfy-RTS-Gerätekonfiguration aus"
+      "description": "Löst eine Sicherung der ESPSomfy-RTS-Gerätekonfiguration aus. Die Datei enthält das WLAN-Passwort im Klartext und wird nur für den Eigentümer lesbar im Konfigurationsverzeichnis von Home Assistant abgelegt"
     }
   }
 }

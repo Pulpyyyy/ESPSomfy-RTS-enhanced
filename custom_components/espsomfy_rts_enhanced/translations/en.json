@@ -239,7 +239,7 @@
         },
         "repeat": {
           "name": "Repeat",
-          "description": "Number of times the command will be repeated"
+          "description": "Number of times the command will be repeated. Leave it empty, or set it to 0, to use the repeat count configured on the motor"
         }
       }
     },
@@ -257,7 +257,7 @@
         },
         "repeat": {
           "name": "Repeat",
-          "description": "Number of times the command will be repeated"
+          "description": "Number of times the command will be repeated. Leave it empty, or set it to 0, to use the repeat count configured on the motor"
         }
       }
     },
@@ -267,7 +267,7 @@
     },
     "backup": {
       "name": "Backup",
-      "description": "Triggers a backup of the ESPSomfy-RTS device configuration"
+      "description": "Triggers a backup of the ESPSomfy-RTS device configuration. The file holds the WiFi passphrase in clear text, it is stored owner-only in the Home Assistant configuration directory"
     }
   }
 }
