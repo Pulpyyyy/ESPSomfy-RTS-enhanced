@@ -33,3 +33,15 @@ Tells a motor with a sun sensor that it is currently sunny.  If the sun flag is 
 # set_windy
 Tells a motor that there is a dangerous wind position so that it opens.  If for instance you have an awning, retracting it in high wind will keep it from flying away.  After the wind condition has been cleared it will allow the awning to be extended by a sun condition after 12 minutes and suspend any other movement for 30 seconds.
 
+# send_command
+Sends any raw RTS protocol command to the motor.  The `command` field accepts Up, My, Down, Toggle, Prog, UpDown, MyUp, MyDown, MyUpDown, StepUp, StepDown, Flag, SunFlag, Favorite or Stop.  The optional `repeat` field (0 to 50) repeats the frame, which is useful for commands that emulate a long button press such as Prog or My.
+
+# send_step_command
+Moves the motor by one step in the given `direction` (Up or Down).  The `step_size` field sets the size of the step from 1 to 127, with 127 being the largest step.  The optional `repeat` field (0 to 50) repeats the command.
+
+# reboot
+Reboots the ESPSomfy RTS device.  Targets the reboot button entity of the device.
+
+# backup
+Creates a backup of the ESPSomfy RTS device configuration and stores it on the Home Assistant host.  Targets the backup button entity of the device.
+
