@@ -19,13 +19,19 @@ from homeassistant.components.group.cover import CoverGroup
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity_platform as ep, entity_registry as er
+from homeassistant.helpers import (
+    device_registry as dr,
+    entity_platform as ep,
+    entity_registry as er,
+)
 from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    DOMAIN,
     EVT_CONNECTED,
+    EVT_GROUPREMOVED,
     EVT_SHADECOMMAND,
     EVT_SHADEREMOVED,
     EVT_SHADESTATE,
@@ -182,6 +188,29 @@ async def async_setup_entry(
         )
 
 
+def _linked_shade_ids(data: Any) -> list[int] | None:
+    """Return the shade ids a group payload links to.
+
+    The REST configuration names that array "linkedShades" and fills it with
+    shade objects, while the groupState websocket event names it "shades" and
+    fills it with bare shade ids. Both spellings are accepted here. None means
+    the payload carried no linkage at all, which is not the same as an empty
+    group.
+    """
+    for key in ("linkedShades", "shades"):
+        if key not in data:
+            continue
+        shade_ids: list[int] = []
+        for linked_shade in data[key]:
+            if isinstance(linked_shade, Mapping):
+                if "shadeId" in linked_shade:
+                    shade_ids.append(int(linked_shade["shadeId"]))
+            else:
+                shade_ids.append(int(linked_shade))
+        return shade_ids
+    return None
+
+
 class ESPSomfyGroup(CoverGroup, ESPSomfyEntity):
     """A grpi[] that is associated with a controller."""
 
@@ -195,25 +224,27 @@ class ESPSomfyGroup(CoverGroup, ESPSomfyEntity):
         self._controller = controller
         self._group_id = data["groupId"]
         self._attr_device_class = CoverDeviceClass.SHADE
-        self._linked_shade_ids = []
+        self._linked_shade_ids = _linked_shade_ids(data) or []
         self._flip_position = False
         self._process_individual = False
         flipped = 0
         notflipped = 0
-        if "linkedShades" in data:
-            for linked_shade in data["linkedShades"]:
-                if (
-                    "shadeType" in linked_shade
-                    and int(linked_shade["shadeType"]) == 3
-                    or (
-                        "flipPosition" in linked_shade
-                        and bool(linked_shade["flipPosition"]) is True
-                    )
-                ):
-                    flipped = flipped + 1
-                else:
-                    notflipped = notflipped + 1
-                self._linked_shade_ids.append(int(linked_shade["shadeId"]))
+        # Only the REST payload carries the linked shade objects the flip
+        # detection needs; the websocket form only carries their ids.
+        for linked_shade in data.get("linkedShades", []):
+            if not isinstance(linked_shade, Mapping):
+                continue
+            if (
+                "shadeType" in linked_shade
+                and int(linked_shade["shadeType"]) == 3
+                or (
+                    "flipPosition" in linked_shade
+                    and bool(linked_shade["flipPosition"]) is True
+                )
+            ):
+                flipped = flipped + 1
+            else:
+                notflipped = notflipped + 1
         uuid = f"{controller.unique_id}_group{self._group_id}"
         if flipped > 0 and notflipped == 0:
             self._flip_position = True
@@ -273,14 +304,42 @@ class ESPSomfyGroup(CoverGroup, ESPSomfyEntity):
         ):
             self._attr_available = bool(self._controller.data["connected"])
             self.async_write_ha_state()
-        elif "groupId" in self._controller.data:
-            if self._controller.data["groupId"] == self._group_id:
-                if "linkedShades" in self._controller.data:
-                    self._linked_shade_ids.clear()
-                    for shade in self._controller.data["linkedShades"]:
-                        self._linked_shade_ids.append(int(shade["shadeId"]))
-                self._attr_available = True
-                self.async_write_ha_state()
+        elif self._controller.data.get("groupId") == self._group_id:
+            if self._controller.data.get("event") == EVT_GROUPREMOVED:
+                self._handle_group_removed()
+                return
+            if (shade_ids := _linked_shade_ids(self._controller.data)) is not None:
+                self._linked_shade_ids = shade_ids
+            self._attr_available = True
+            self.async_write_ha_state()
+
+    @callback
+    def _handle_group_removed(self) -> None:
+        """Mark the group gone and schedule its removal from the registries."""
+        self._attr_available = False
+        self.async_write_ha_state()
+        self.hass.async_create_task(self._async_remove_group())
+
+    async def _async_remove_group(self) -> None:
+        """Drop the entity and the device of a group deleted on the firmware."""
+        entities = er.async_get(self.hass)
+        if entities.async_get(self.entity_id) is None:
+            await self.async_remove(force_remove=True)
+        else:
+            entities.async_remove(self.entity_id)
+        devices = dr.async_get(self.hass)
+        device = devices.async_get_device(
+            identifiers={
+                (DOMAIN, f"group_{self._controller.unique_id}_{self._group_id}")
+            }
+        )
+        # Removing the device takes the sun/wind entities of the group with it.
+        if device is not None and self._controller.config_entry_id in (
+            device.config_entries
+        ):
+            devices.async_update_device(
+                device.id, remove_config_entry_id=self._controller.config_entry_id
+            )
 
     @property
     def available(self) -> bool:
@@ -413,7 +472,15 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
                     self._attr_device_class = CoverDeviceClass.SHUTTER
                 case 5:
                     self._attr_device_class = CoverDeviceClass.GARAGE
-                    self._attr_supported_features = CoverEntityFeature.STOP
+                    # Single button garage door: the three commands are the same
+                    # toggle frame, so all of them are supported. Which ones make
+                    # sense right now is narrowed down by
+                    # update_supported_features() once the position is known.
+                    self._attr_supported_features = (
+                        CoverEntityFeature.OPEN
+                        | CoverEntityFeature.CLOSE
+                        | CoverEntityFeature.STOP
+                    )
 
                 case 6:
                     self._attr_device_class = CoverDeviceClass.GARAGE
@@ -428,6 +495,12 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
                     self._attr_device_class = CoverDeviceClass.SHADE
 
         self._attr_is_closed: bool = False
+        # Toggle types advertise their features from the position reported by the
+        # configuration. Waiting for the first shadeState event would leave the
+        # entity with fewer features than it really has for as long as the motor
+        # stays idle.
+        if self.is_toggle:
+            self.update_supported_features()
         # print(f"Set up shade {self._attr_unique_id} - {self._attr_name}")
 
     def _handle_state_update(self, data) -> None:
@@ -506,8 +579,8 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
                 self._attr_current_cover_tilt_position = (
                     self.current_cover_tilt_position
                 )
-            # Les types toggle (garage 1-bouton, portails) exposent OPEN/CLOSE/STOP
-            # dynamiquement selon le mouvement en cours.
+            # Toggle types (single button garage doors, gates) expose
+            # OPEN/CLOSE/STOP depending on the movement currently under way.
             if self.is_toggle:
                 self.update_supported_features()
             self.async_write_ha_state()
