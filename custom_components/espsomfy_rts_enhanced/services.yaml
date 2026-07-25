@@ -221,8 +221,6 @@ reboot:
     entity:
       integration: espsomfy_rts_enhanced
       domain: button
-      supported_features:
-        - fan.FanEntityFeature.SET_SPEED
 
 backup:
   name: Backup
@@ -231,8 +229,6 @@ backup:
     entity:
       integration: espsomfy_rts_enhanced
       domain: button
-      supported_features:
-        - fan.FanEntityFeature.OSCILLATE
 
 
 
