@@ -441,7 +441,13 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
             upd = True
         if "flipPosition" in data:
             self._flip_position = bool(data["flipPosition"])
-        if "position" in data and self._position != data.get("position", -1):
+        # The firmware sends -1 for an unknown position. Storing it would make
+        # current_cover_position report 101, outside Home Assistant's 0-100 range.
+        if (
+            "position" in data
+            and int(data["position"]) >= 0
+            and self._position != data.get("position", -1)
+        ):
             self._position = int(data["position"])
             upd = True
         if "direction" in data and self._direction != data.get("direction", 0):
@@ -462,7 +468,7 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
             self._has_tilt = bool(data["hasTilt"])
         if "tiltType" in self._controller.data:
             match int(self._controller.data["tiltType"]):
-                case 1 | 2:
+                case 1 | 2 | 4:
                     self._has_tilt = True
                 case 3:
                     self._has_tilt = True
@@ -471,8 +477,10 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
                     self._has_tilt = False
                     self._has_lift = True
         if self._has_tilt:
-            if "tiltPosition" in data and self._tilt_position != data.get(
-                "tiltPosition", -1
+            if (
+                "tiltPosition" in data
+                and int(data["tiltPosition"]) >= 0
+                and self._tilt_position != data.get("tiltPosition", -1)
             ):
                 self._tilt_position = int(data["tiltPosition"])
                 upd = True
