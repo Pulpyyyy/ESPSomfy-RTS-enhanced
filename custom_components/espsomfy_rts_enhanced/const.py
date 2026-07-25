@@ -1,8 +1,15 @@
 """Constants for the ESPSomfy RTS integration."""
 
+import json
+from pathlib import Path
+
 from homeassistant.const import Platform
 
-VERSION = "v3.3.1"
+# Source de vérité unique : la version vient du manifest (lu à l'import,
+# que HA exécute en executor). Plus de désynchro possible entre les deux.
+VERSION = "v" + json.loads(
+    (Path(__file__).parent / "manifest.json").read_text(encoding="utf-8")
+)["version"]
 DOMAIN = "espsomfy_rts_enhanced"
 MANUFACTURER = "Pulpyyyy"
 API_SHADES = "/shades"
