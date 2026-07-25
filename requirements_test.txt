@@ -2,3 +2,6 @@
 # and pulls in the matching homeassistant release, so it is deliberately not
 # pinned: the integration is expected to run against the current release.
 pytest-homeassistant-custom-component
+# Runtime requirements of the integration itself (mirrors manifest.json);
+# Home Assistant installs these from the manifest, pytest does not.
+aiofiles>=24.1.0,<26.0
