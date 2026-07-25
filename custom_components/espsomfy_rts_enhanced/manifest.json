@@ -8,7 +8,7 @@
   "integration_type": "hub",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/issues",
-  "requirements": ["aiofiles>=23.1.0"],
+  "requirements": ["aiofiles>=24.1.0,<26.0"],
   "ssdp": [
     {
       "deviceType": "urn:schemas-pulpyyyy-org:device:Somfy:1"

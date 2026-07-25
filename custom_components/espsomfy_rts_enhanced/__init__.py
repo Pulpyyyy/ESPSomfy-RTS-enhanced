@@ -32,7 +32,7 @@ class ESPSomfyRTSEntityFeature(IntFlag):
 async def async_setup_entry(hass: HomeAssistant, entry: ESPSomfyConfigEntry) -> bool:
     """Set up ESPSomfy-RTS from a config entry."""
     api = ESPSomfyAPI(hass, entry.entry_id, entry.data)
-    controller = ESPSomfyController(entry.entry_id, hass, api)
+    controller = ESPSomfyController(entry, hass, api)
 
     entry.runtime_data = controller
 

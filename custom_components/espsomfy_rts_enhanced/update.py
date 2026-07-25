@@ -21,6 +21,25 @@ from .entity import ESPSomfyEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+
+def _supported_features(
+    check_for_update: bool, internet_available: bool
+) -> UpdateEntityFeature:
+    """Return the update features the device currently offers.
+
+    Installing needs the device to look for updates and to be able to reach the
+    internet, it downloads the firmware itself.
+    """
+    features = (
+        UpdateEntityFeature.SPECIFIC_VERSION
+        | UpdateEntityFeature.PROGRESS
+        | UpdateEntityFeature.RELEASE_NOTES
+    )
+    if check_for_update and internet_available:
+        features |= UpdateEntityFeature.INSTALL | UpdateEntityFeature.BACKUP
+    return features
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -38,7 +57,7 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
     _attr_device_class = UpdateDeviceClass.FIRMWARE
     _attr_entity_category = EntityCategory.CONFIG
 
-    # Indique explicitement à Home Assistant de ne pas rafraîchir cette entité par lui-même
+    # Push only entity: Home Assistant must not refresh it on its own.
     _attr_should_poll = False
 
     _attr_has_entity_name = True
@@ -56,58 +75,51 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
         self._app_progress = 100
         self._total_progress = 100
 
-        # Sécurité au démarrage : On applique les fonctionnalités de base
-        self._attr_supported_features = (
-            UpdateEntityFeature.SPECIFIC_VERSION
-            | UpdateEntityFeature.PROGRESS
-            | UpdateEntityFeature.RELEASE_NOTES
+        # The device already told us during discovery whether it looks for
+        # updates and whether it has internet, so the install button does not
+        # have to wait for the first fwStatus event to appear.
+        self._attr_supported_features = _supported_features(
+            controller.check_for_update, controller.internet_available
         )
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        if (
-            self._controller.data["event"] == EVT_CONNECTED
-            and "connected" in self._controller.data
-        ):
+        if not self.enabled:
+            return
+        evt = self._controller.data.get("event", "")
+        if evt == EVT_CONNECTED and "connected" in self._controller.data:
             self._available = bool(self._controller.data["connected"])
             self.async_write_ha_state()
 
-        elif self._controller.data["event"] == EVT_FWSTATUS:
+        elif evt == EVT_FWSTATUS:
             evt_data = self._controller.data
 
-            # Changé de .error à .debug pour ne plus polluer les logs de l'utilisateur
+            # Debug and not error: this is a routine event, not a failure.
             _LOGGER.debug("ESPSomfy RTS FWSTATUS Payload: %s", evt_data)
 
-            # Extraction des deux verrous de sécurité
-            check_updates = evt_data.get("checkForUpdate", False)
-            internet_ok = evt_data.get("inetAvailable", False)
-
-            # Le bouton d'installation ne s'active QUE si l'ESP confirme les deux conditions
-            if check_updates and internet_ok:
-                self._attr_supported_features = (
-                    UpdateEntityFeature.INSTALL
-                    | UpdateEntityFeature.SPECIFIC_VERSION
-                    | UpdateEntityFeature.PROGRESS
-                    | UpdateEntityFeature.BACKUP
-                    | UpdateEntityFeature.RELEASE_NOTES
-                )
-            else:
-                self._attr_supported_features = (
-                    UpdateEntityFeature.SPECIFIC_VERSION
-                    | UpdateEntityFeature.PROGRESS
-                    | UpdateEntityFeature.RELEASE_NOTES
-                )
+            # The install button only lights up when the device confirms both
+            # conditions, otherwise the download would fail on the device.
+            self._attr_supported_features = _supported_features(
+                evt_data.get("checkForUpdate", False),
+                evt_data.get("inetAvailable", False),
+            )
             self.async_write_ha_state()
 
-        elif self.controller.data["event"] == EVT_UPDPROGRESS:
-            d = self.controller.data
+        elif evt == EVT_UPDPROGRESS:
+            d = self._controller.data
             if "part" in d:
+                # A device that reports a zero sized image has nothing to show
+                # and must not divide by it.
+                total = int(d.get("total", 0))
+                if total <= 0:
+                    return
+                progress = (int(d.get("loaded", 0)) / total) * 100
                 if int(d["part"]) == 0:
                     self._app_progress = 0
-                    self._fw_progress = (int(d["loaded"]) / int(d["total"])) * 100
+                    self._fw_progress = progress
                 elif int(d["part"]) == 100:
                     self._fw_progress = 100
-                    self._app_progress = (int(d["loaded"]) / int(d["total"])) * 100
+                    self._app_progress = progress
                 self._total_progress = int((self._fw_progress + self._app_progress) / 2)
                 self.async_write_ha_state()
 
@@ -118,8 +130,13 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
 
     @property
     def can_install(self) -> bool:
-        """Indicates whether the current version supports firmware installation."""
-        return True
+        """Indicates whether an update could actually be installed right now."""
+        if not self._controller.can_update:
+            # Firmware older than 2.2.1 has no download endpoint.
+            return False
+        if not self.supported_features & UpdateEntityFeature.INSTALL:
+            return False
+        return self.latest_version is not None
 
     @property
     def installed_version(self) -> str | None:
@@ -161,7 +178,7 @@ class ESPSomfyRTSUpdateEntity(ESPSomfyEntity, UpdateEntity):
         if backup:
             success = await self._controller.create_backup()
         if success:
-            # Honore la version demandée (SPECIFIC_VERSION), sinon la dernière.
+            # Honour the requested version (SPECIFIC_VERSION), else the latest.
             version = version or cast(str, self.latest_version)
             if version is not None:
                 await self.controller.update_firmware(version)

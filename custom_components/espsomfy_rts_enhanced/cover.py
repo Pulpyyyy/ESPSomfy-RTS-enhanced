@@ -53,6 +53,15 @@ SVC_SET_WINDY = "set_windy"
 SVC_SEND_COMMAND = "send_command"
 SVC_SEND_STEP_COMMAND = "send_step_command"
 
+TILT_FEATURES = (
+    CoverEntityFeature.OPEN_TILT
+    | CoverEntityFeature.CLOSE_TILT
+    | CoverEntityFeature.SET_TILT_POSITION
+)
+# Everything tilt related, used to keep the tilt capabilities a shade reported
+# when the shade type rewrites the lift capabilities from scratch.
+ALL_TILT_FEATURES = TILT_FEATURES | CoverEntityFeature.STOP_TILT
+
 KEY_OPEN_CLOSE = "open_close"
 KEY_STOP = "stop"
 KEY_POSITION = "position"
@@ -97,17 +106,24 @@ SUNNY_SERVICE_SCHEMA: Final = make_entity_service_schema(
 WINDY_SERVICE_SCHEMA: Final = make_entity_service_schema(
     {vol.Required(ATTR_WINDY): vol.All(vol.Coerce(bool))}
 )
+# The device reads repeat as "how many extra frames to send", and falls back to
+# the repeat count configured on the motor when it is 0 or absent. The range
+# below has to stay in step with the one advertised in services.yaml.
+REPEAT_SELECTOR: Final = vol.All(vol.Coerce(int), vol.Range(min=0, max=50))
+
 SEND_COMMAND_SERVICE_SCHEMA: Final = make_entity_service_schema(
     {
         vol.Required(ATTR_COMMAND): vol.In(ALLOWED_COMMAND),
-        vol.Optional(ATTR_REPEAT): vol.Range(min=0, max=50),
+        vol.Optional(ATTR_REPEAT): REPEAT_SELECTOR,
     }
 )
 SEND_STEP_COMMAND_SERVICE_SCHEMA: Final = make_entity_service_schema(
     {
         vol.Required(ATTR_DIRECTION): vol.In(["Up", "Down"]),
-        vol.Required(ATTR_STEP_SIZE): vol.Range(min=1, max=127),
-        vol.Optional(ATTR_REPEAT): vol.Range(min=0, max=50),
+        vol.Required(ATTR_STEP_SIZE): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=127)
+        ),
+        vol.Optional(ATTR_REPEAT): REPEAT_SELECTOR,
     }
 )
 
@@ -296,7 +312,7 @@ class ESPSomfyGroup(CoverGroup, ESPSomfyEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        if self.registry_entry.disabled:
+        if not self.enabled:
             return
         if (
             self._controller.data["event"] == EVT_CONNECTED
@@ -430,34 +446,26 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
             | CoverEntityFeature.STOP
             | CoverEntityFeature.SET_POSITION
         )
-        if "hasTilt" in data and data["hasTilt"] is True:
-            self._attr_supported_features |= (
-                CoverEntityFeature.OPEN_TILT
-                | CoverEntityFeature.CLOSE_TILT
-                | CoverEntityFeature.SET_TILT_POSITION
-            )
-            self._has_tilt = True
-            self._tilt_position = data.get("tiltPosition", 100)
-            self._tilt_direction = data.get("tiltDirection", 0)
+        # hasTilt was a legacy preference of the firmware and never appears in
+        # any payload it sends: tiltType is the only source of truth.
         if "tiltType" in data:
             self._tilt_type = int(data["tiltType"])
-            match int(data["tiltType"]):
+            match self._tilt_type:
                 case 1 | 2 | 4:
                     self._has_tilt = True
-                    self._attr_supported_features |= (
-                        CoverEntityFeature.OPEN_TILT
-                        | CoverEntityFeature.CLOSE_TILT
-                        | CoverEntityFeature.SET_TILT_POSITION
-                    )
+                    self._attr_supported_features |= TILT_FEATURES
                 case 3:
+                    # Tilt only motor: no lift to drive at all.
                     self._has_tilt = True
                     self._has_lift = False
                     self._attr_supported_features = (
-                        CoverEntityFeature.OPEN_TILT
-                        | CoverEntityFeature.STOP_TILT
-                        | CoverEntityFeature.CLOSE_TILT
-                        | CoverEntityFeature.SET_TILT_POSITION
+                        TILT_FEATURES | CoverEntityFeature.STOP_TILT
                     )
+        if self._has_tilt:
+            # -1 is the "unknown" sentinel of the firmware.
+            if (tilt_position := int(data.get("tiltPosition", -1))) >= 0:
+                self._tilt_position = tilt_position
+            self._tilt_direction = int(data.get("tiltDirection", 0))
 
         if "shadeType" in data:
             self._shade_type = int(data["shadeType"])
@@ -480,6 +488,7 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
                         CoverEntityFeature.OPEN
                         | CoverEntityFeature.CLOSE
                         | CoverEntityFeature.STOP
+                        | (self._attr_supported_features & ALL_TILT_FEATURES)
                     )
 
                 case 6:
@@ -488,8 +497,12 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
                     self._attr_device_class = CoverDeviceClass.GATE
                 case 14 | 15 | 16:
                     self._attr_device_class = CoverDeviceClass.GATE
+                    # Keep whatever tilt the reported tiltType granted: the
+                    # shade type only decides how the lift is driven.
                     self._attr_supported_features = (
-                        CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE
+                        CoverEntityFeature.OPEN
+                        | CoverEntityFeature.CLOSE
+                        | (self._attr_supported_features & ALL_TILT_FEATURES)
                     )
                 case _:
                     self._attr_device_class = CoverDeviceClass.SHADE
@@ -537,10 +550,9 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
             self._state_attributes["my_pos"] = int(data.get("myPos", -1))
             upd = True
 
-        if "hasTilt" in data and self._has_tilt != data.get("hasTilt", False):
-            self._has_tilt = bool(data["hasTilt"])
-        if "tiltType" in self._controller.data:
-            match int(self._controller.data["tiltType"]):
+        if "tiltType" in data:
+            self._tilt_type = int(data["tiltType"])
+            match self._tilt_type:
                 case 1 | 2 | 4:
                     self._has_tilt = True
                 case 3:
@@ -627,7 +639,7 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        if self.registry_entry.disabled:
+        if not self.enabled:
             return
         evt = self._controller.data.get("event", "")
         if evt == EVT_CONNECTED:

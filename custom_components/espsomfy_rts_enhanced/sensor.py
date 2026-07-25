@@ -15,6 +15,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONF_HOST,
     UnitOfDataRate,
     UnitOfInformation,
 )
@@ -67,7 +68,7 @@ async def async_setup_entry(
             )
         if "chipModel" in data:
             chip_model = "ESP32"
-            if len(data["chipModel"]):
+            if len(data.get("chipModel") or ""):
                 chip_model += "-"
                 chip_model += data["chipModel"]
             new_entities.append(
@@ -167,7 +168,7 @@ async def async_setup_entry(
                     )
                 )
         if "memory" in data:
-            mem = data["memory"]
+            mem = data.get("memory") or {}
             if "free" in mem:
                 new_entities.append(
                     ESPSomfyDiagSensor(
@@ -245,7 +246,11 @@ async def async_setup_entry(
                     has_entity_name=True,
                     icon="mdi:ip",
                     events={},
-                    native_value=controller.api.get_data()["host"],
+                    # The entry data always carries the host, but a hand edited
+                    # entry must not take the whole platform down.
+                    native_value=controller.api.get_data().get(
+                        CONF_HOST, controller.api.get_host()
+                    ),
                 ),
                 data=data,
             )
@@ -272,11 +277,11 @@ class ESPSomfyDiagSensor(ESPSomfyEntity, SensorEntity):
         self.events = cfg.events
         self._attr_native_value = cfg.native_value
 
-        # Activer la norme et forcer le nom à None pour exploiter la translation_key
+        # Entity naming standard, the name comes from the translation key
         self._attr_has_entity_name = cfg.has_entity_name
 
+        # Map the system properties the description carries
 
-        # Correction : On mappe les propriétés système indispensables
         self._attr_native_unit_of_measurement = cfg.unit_of_measurement
         self._attr_device_class = cfg.device_class
         self._attr_state_class = cfg.state_class
@@ -288,7 +293,7 @@ class ESPSomfyDiagSensor(ESPSomfyEntity, SensorEntity):
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        if self.registry_entry.disabled:
+        if not self.enabled:
             return
         if (
             "event" in self._controller.data

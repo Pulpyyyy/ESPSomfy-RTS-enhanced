@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from datetime import datetime
-from functools import partial
 import json
 import logging
 import os
@@ -15,6 +14,7 @@ import aiofiles
 import aiohttp
 from packaging.version import parse as version_parse
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PIN, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
@@ -27,6 +27,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    API_BACKUP,
     API_DISCOVERY,
     API_GROUPCOMMAND,
     API_GROUPS,
@@ -55,6 +56,25 @@ _LOGGER = logging.getLogger(__name__)
 
 WS_HEARTBEAT = 20
 WS_RECONNECT_MAX_DELAY = 20
+
+# The backup holds the WiFi passphrase in clear text, the device needs it to
+# restore itself, so both the directory and the files stay owner readable only.
+BACKUP_DIR_MODE = 0o700
+BACKUP_FILE_MODE = 0o600
+
+
+def _prepare_backup_dir(path: str) -> None:
+    """Create the backup directory, readable by its owner only."""
+    os.makedirs(path, mode=BACKUP_DIR_MODE, exist_ok=True)
+    # makedirs ignores the mode of a directory that already exists, and older
+    # versions of this integration created it with the default permissions.
+    with contextlib.suppress(OSError):
+        os.chmod(path, BACKUP_DIR_MODE)
+
+
+def _open_private(path: str, flags: int) -> int:
+    """Open a backup file with owner-only permissions."""
+    return os.open(path, flags, BACKUP_FILE_MODE)
 
 
 class SocketListener:
@@ -147,6 +167,16 @@ class SocketListener:
                 event = message[3:ndx]
                 if not self.filter or event in self.filter:
                     data = json.loads(message[ndx + 1 : -1])
+                    # Everything downstream indexes the payload by key. A frame
+                    # carrying an array or a bare value is not something this
+                    # integration knows how to route.
+                    if not isinstance(data, dict):
+                        _LOGGER.debug(
+                            "Ignoring %s event with a non object payload: %.80r",
+                            event,
+                            data,
+                        )
+                        return
                     data["event"] = event
                     self.onpacket(data)
             elif message.lower() == "connected":
@@ -160,17 +190,22 @@ class SocketListener:
 class ESPSomfyController(DataUpdateCoordinator):
     """Data coordinator/controller for receiving from espsomfy_RTS."""
 
-    def __init__(self, config_entry_id, hass: HomeAssistant, api: ESPSomfyAPI) -> None:
+    def __init__(
+        self, config_entry: ConfigEntry, hass: HomeAssistant, api: ESPSomfyAPI
+    ) -> None:
         """Initialize data coordinator."""
         super().__init__(
             hass,
             _LOGGER,
             # Name of the data. For logging purposes.
             name=DOMAIN,
+            # The entry the coordinator belongs to, Home Assistant needs it to
+            # attach the background refresh to the right integration.
+            config_entry=config_entry,
             # The setting below is only for polling.
             # update_interval=timedelta(seconds=5),
         )
-        self.config_entry_id = config_entry_id
+        self.config_entry_id = config_entry.entry_id
         self.api = api
         self.ws_listener = None
 
@@ -315,7 +350,10 @@ class ESPSomfyAPI:
         self.data = data
         self.set_host(data[CONF_HOST])
         self._config: Any = {}
-        self._session = async_get_clientsession(self.hass, verify_ssl=False)
+        # The device is only ever reached over plain HTTP, so there is no
+        # certificate to verify there. This session also fetches the release
+        # notes from GitHub over HTTPS, which must stay verified.
+        self._session = async_get_clientsession(self.hass)
         self._authType = 0
         self._needsKey = False
         self._headers = {"apikey": ""}
@@ -499,9 +537,14 @@ class ESPSomfyAPI:
         return False
 
     async def create_backup(self) -> bool:
-        """Create a backup."""
+        """Create a backup of the device configuration on the Home Assistant host.
+
+        The file contains the WiFi passphrase in clear text because the device
+        needs it to restore itself, so it is written owner-only under the
+        configuration directory, never under www/ where it would be served.
+        """
         try:
-            url = f"{self._api_url}/backup?attach=true"
+            url = f"{self._api_url}{API_BACKUP}?attach=true"
             async with self._session.get(url, headers=self._headers) as resp:
                 if resp.status != 200:
                     _LOGGER.error(
@@ -511,38 +554,24 @@ class ESPSomfyAPI:
                         await resp.text(),
                     )
                     return False
+                # Kept as raw bytes: decoding the response and encoding it back
+                # would silently rewrite anything the device did not send as
+                # UTF-8, and a backup has to stay restorable byte for byte.
+                data = await resp.read()
 
-                await self.hass.async_add_executor_job(
-                    partial(os.makedirs, self.backup_dir, exist_ok=True)
-                )
-
-                data = await resp.text(encoding=None)
-                local_dt = dt_util.as_local(datetime.now(dt_util.UTC))
-                fpath = self.hass.config.path(
-                    f"{self.backup_dir}/{local_dt.strftime('%Y-%m-%dT%H_%M_%S')}.backup"
-                )
-            async with aiofiles.open(fpath, mode="wb+") as f:
-                await f.write(data.encode())
-                return True
-        except Exception as e:  # noqa: BLE001
+            await self.hass.async_add_executor_job(
+                _prepare_backup_dir, self.backup_dir
+            )
+            local_dt = dt_util.as_local(datetime.now(dt_util.UTC))
+            fpath = os.path.join(
+                self.backup_dir, f"{local_dt.strftime('%Y-%m-%dT%H_%M_%S')}.backup"
+            )
+            async with aiofiles.open(fpath, mode="wb", opener=_open_private) as f:
+                await f.write(data)
+        except (OSError, aiohttp.ClientError, TimeoutError) as e:
             _LOGGER.error("An error occurred while creating backup: %s", e)
             return False
-
-    def get_backups(self) -> list[str] | None:
-        """Get a list of all the available backups."""
-        f: list[str] = []
-        if not os.path.exists(self.backup_dir):
-            return None
-        files = os.listdir(self.backup_dir)
-        f = [
-            file
-            for file in files
-            if os.path.isfile(os.path.join(self.backup_dir, file))
-            and file.endswith(".backup")
-            and file[:1].isdigit()
-        ]
-        f.sort(reverse=True)
-        return f
+        return True
 
     def apply_data(self, data) -> None:
         """Apply the returned data to the configuration."""
@@ -774,7 +803,6 @@ class ESPSomfyAPI:
         login : le faire ici provoquait un double forward en cas de retry.
         """
         try:
-            self._session = aiohttp_client.async_get_clientsession(self.hass)
             async with self._session.get(f"{self._api_url}{API_DISCOVERY}") as resp:
                 if resp.status == 200:
                     data = await resp.json()

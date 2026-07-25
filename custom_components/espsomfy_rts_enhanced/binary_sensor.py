@@ -85,6 +85,8 @@ class ESPSomfySunSensor(ESPSomfyEntity, BinarySensorEntity):
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
+        if not self.enabled:
+            return
         if (
             self._controller.data["event"] == EVT_CONNECTED
             and "connected" in self._controller.data
@@ -157,7 +159,7 @@ class ESPSomfyWindSensor(ESPSomfyEntity, BinarySensorEntity):
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        if self.registry_entry.disabled:
+        if not self.enabled:
             return
         if (
             self._controller.data["event"] == EVT_CONNECTED
