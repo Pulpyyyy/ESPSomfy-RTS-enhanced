@@ -1,0 +1,4 @@
+# pytest-homeassistant-custom-component ships the Home Assistant test harness
+# and pulls in the matching homeassistant release, so it is deliberately not
+# pinned: the integration is expected to run against the current release.
+pytest-homeassistant-custom-component
