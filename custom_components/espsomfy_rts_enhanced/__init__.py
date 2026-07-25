@@ -64,7 +64,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ESPSomfyConfigEntry) -> 
     # à faire avant le chargement des plateformes pour ne pas orpheliner l'entité.
     await _async_migrate_unique_ids(hass, entry)
 
-    # 3. Les plateformes ne sont chargées qu'une fois le login réussi, sinon un
+    # 3. Chargement des shades/groups, une fois authentifié. get_initial() ne récupère
+    #    que /discovery (identité) : sur un boîtier en auth complète, /discovery n'inclut
+    #    plus la liste des shades/groups sans token, donc les plateformes seraient créées
+    #    avec une liste vide et tous les volets reviendraient "unavailable".
+    await api.load_shades()
+    await api.load_groups()
+
+    # 4. Les plateformes ne sont chargées qu'une fois le login réussi, sinon un
     #    échec après forward provoquait un double chargement au retry.
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
