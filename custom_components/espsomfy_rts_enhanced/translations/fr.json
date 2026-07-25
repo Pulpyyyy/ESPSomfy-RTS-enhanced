@@ -239,7 +239,7 @@
         },
         "repeat": {
           "name": "Répétition",
-          "description": "Nombre de fois que la commande sera répétée"
+          "description": "Nombre de fois que la commande sera répétée. Laissez vide, ou mettez 0, pour utiliser le nombre de répétitions configuré sur le moteur"
         }
       }
     },
@@ -257,7 +257,7 @@
         },
         "repeat": {
           "name": "Répétition",
-          "description": "Nombre de fois que la commande sera répétée"
+          "description": "Nombre de fois que la commande sera répétée. Laissez vide, ou mettez 0, pour utiliser le nombre de répétitions configuré sur le moteur"
         }
       }
     },
@@ -267,7 +267,7 @@
     },
     "backup": {
       "name": "Sauvegarder",
-      "description": "Lance une sauvegarde de la configuration du boîtier ESPSomfy-RTS"
+      "description": "Lance une sauvegarde de la configuration du boîtier ESPSomfy-RTS. Le fichier contient la phrase secrète WiFi en clair, il est écrit en accès propriétaire seul dans le répertoire de configuration de Home Assistant"
     }
   }
 }

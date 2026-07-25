@@ -239,7 +239,7 @@
         },
         "repeat": {
           "name": "Repetición",
-          "description": "Número de veces que se repetirá el comando"
+          "description": "Número de veces que se repetirá el comando. Déjalo vacío, o ponlo a 0, para usar el número de repeticiones configurado en el motor"
         }
       }
     },
@@ -257,7 +257,7 @@
         },
         "repeat": {
           "name": "Repetición",
-          "description": "Número de veces que se repetirá el comando"
+          "description": "Número de veces que se repetirá el comando. Déjalo vacío, o ponlo a 0, para usar el número de repeticiones configurado en el motor"
         }
       }
     },
@@ -267,7 +267,7 @@
     },
     "backup": {
       "name": "Copia de seguridad",
-      "description": "Inicia una copia de seguridad de la configuración del dispositivo ESPSomfy-RTS"
+      "description": "Inicia una copia de seguridad de la configuración del dispositivo ESPSomfy-RTS. El archivo contiene la contraseña WiFi en texto plano y se guarda con permisos solo para el propietario en el directorio de configuración de Home Assistant"
     }
   }
 }
