@@ -188,7 +188,7 @@ class ESPSomfyBinarySwitch(ESPSomfyEntity, SwitchEntity):
             self.async_write_ha_state()
         elif (
             "position" in self._controller.data
-            and self._controller.data["shadeId"] == self._shade_id
+            and self._controller.data.get("shadeId") == self._shade_id
         ):
             self._attr_is_on = bool((int(self._controller.data["position"])) > 0)
             self.async_write_ha_state()

@@ -544,6 +544,8 @@ class ESPSomfyAPI:
 
     def apply_data(self, data) -> None:
         """Apply the returned data to the configuration."""
+        if "serverId" not in data or "model" not in data:
+            raise DiscoveryError(f"Incomplete discovery payload: {sorted(data)}")
         self._config["serverId"] = data["serverId"]
         self._config["model"] = data["model"]
         if "chipModel" in data:
@@ -778,7 +780,7 @@ class ESPSomfyAPI:
                     self._configured = True
                 else:
                     _LOGGER.error(await resp.text())
-        except aiohttp.ClientError as ex:
+        except (aiohttp.ClientError, OSError, TimeoutError, DiscoveryError) as ex:
             _LOGGER.debug("ESPSomfy-RTS initial discovery failed: %s", ex)
 
     async def fetch_release_notes(self, version: str) -> str | None:
