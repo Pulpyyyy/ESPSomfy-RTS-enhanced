@@ -19,11 +19,6 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers.selector import (
-    TextSelector,
-    TextSelectorConfig,
-    TextSelectorType,
-)
 from homeassistant.util.network import is_host_valid
 
 from .const import DOMAIN
@@ -33,14 +28,6 @@ from .controller import (
     ESPSomfyController,
     InvalidHost,
     LoginError,
-)
-
-DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_HOST, "Server Address"): TextSelector(
-            TextSelectorConfig(type=TextSelectorType.URL)
-        )
-    }
 )
 
 _LOGGER = logging.getLogger(__name__)

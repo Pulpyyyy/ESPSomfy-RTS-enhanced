@@ -126,7 +126,7 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
         self._controller = controller
         self._attr_device_class = cfg.device_class
 
-        # Liaison avec la description
+        # Bind the description
         self.entity_description = cfg
 
         self._attr_unique_id = f"{cfg.key}_{controller.unique_id}"
@@ -137,12 +137,10 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
         self._attr_assumed_state = True
         self._attr_supported_features = cfg.features
 
-        # Application de la norme Home Assistant
+        # Home Assistant naming standard: the entity id is built from the device
+        # name and the translation key, no need to force an object id.
         self._attr_has_entity_name = cfg.has_entity_name
         self._attr_translation_key = cfg.translation_key
-
-        # Correction ici : ajout de .api
-        self._attr_object_id = f"{controller.api.deviceName.lower()}_{cfg.key}"
 
     async def async_press(self) -> None:
         """Process the button press."""
@@ -150,16 +148,16 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
         if "data" in self._action:
             data = self._action["data"]
 
-        # 1. Exécution de l'action initiale (Reboot ou Sauvegarde)
+        # 1. Run the requested action (reboot or backup)
         if "service" in self._action:
             await self._controller.api.put_command(self._action["service"], data)
         elif "apimethod" in self._action:
             method = getattr(self._controller.api, self._action["apimethod"])
             await method()
 
-        # 2. Si c'est le bouton backup, on garde au plus MAX_BACKUPS fichiers.
-        # Le dossier vient de l'API (ESPSomfyRTS_<serverId>), le même que celui
-        # où create_backup() écrit.
+        # 2. For the backup button, keep at most MAX_BACKUPS files. The
+        # directory comes from the API (ESPSomfyRTS_<serverId>), the very one
+        # create_backup() writes to.
         if self.entity_description.key == "backup":
             try:
                 await self.hass.async_add_executor_job(

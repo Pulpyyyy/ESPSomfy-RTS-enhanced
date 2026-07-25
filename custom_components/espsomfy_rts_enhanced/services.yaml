@@ -175,7 +175,9 @@ send_command:
     repeat:
       required: false
       name: Repeat
-      description: Number of times the command will be repeated
+      description: >-
+        Number of times the command will be repeated. Leave empty or set to 0 to
+        use the repeat count configured on the motor itself.
       selector:
         number:
           min: 0
@@ -209,7 +211,9 @@ send_step_command:
     repeat:
       required: false
       name: Repeat
-      description: Number of times the command will be repeated
+      description: >-
+        Number of times the command will be repeated. Leave empty or set to 0 to
+        use the repeat count configured on the motor itself.
       selector:
         number:
           min: 0
@@ -224,11 +228,13 @@ reboot:
 
 backup:
   name: Backup
-  description: Backup the ESPSomfy Device
+  description: >-
+    Backup the ESPSomfy Device configuration to the Home Assistant host. The
+    backup file contains the WiFi passphrase and the remote addresses in clear
+    text because the device needs them to restore itself. It is written with
+    owner-only permissions in ESPSomfyRTS_<serverId> under the configuration
+    directory, never under www/, and the five most recent files are kept.
   target:
     entity:
       integration: espsomfy_rts_enhanced
       domain: button
-
-
-
