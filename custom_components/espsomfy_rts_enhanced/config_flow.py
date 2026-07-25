@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+import aiohttp
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -103,7 +104,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
             except InvalidHost:
                 errors[CONF_HOST] = "invalid_host"
-            except ConnectionError:
+            except (aiohttp.ClientError, OSError, TimeoutError):
                 errors["base"] = "cannot_connect"
             except DiscoveryError:
                 errors[CONF_HOST] = "discovery_error"
@@ -193,7 +194,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self.hass.config_entries.async_update_entry(entry, data=data)
                 await self.hass.config_entries.async_reload(entry.entry_id)
                 return self.async_abort(reason="reauth_successful")
-            except ConnectionError:
+            except (aiohttp.ClientError, OSError, TimeoutError):
                 errors["base"] = "cannot_connect"
             except DiscoveryError:
                 errors["base"] = "discovery_error"
@@ -264,7 +265,7 @@ class ESPSomfyOptionsFlowHandler(config_entries.OptionsFlow):
                 )
             except InvalidHost:
                 errors[CONF_HOST] = "invalid_host"
-            except ConnectionError:
+            except (aiohttp.ClientError, OSError, TimeoutError):
                 errors["base"] = "cannot_connect"
             except DiscoveryError:
                 errors[CONF_HOST] = "discovery_error"
