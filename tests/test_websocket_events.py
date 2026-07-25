@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -46,6 +46,42 @@ def _shade(**overrides: Any) -> ESPSomfyShade:
         "tiltType": 0,
     } | overrides
     return ESPSomfyShade(controller, data)
+
+
+def test_shade_state_writes_state_once() -> None:
+    """A shadeState with a position change must write state exactly once.
+
+    A second, unconditional async_write_ha_state() used to run for every event,
+    doubling each position step into two state_changed events -- and with an
+    attribute-injecting helper (cover_extender) each write dropped then re-added the
+    injected attributes, fanning one step out to four events. Only _handle_state_update
+    should write for a shade state, and only when something changed.
+    """
+    shade = _shade(position=40)
+    shade.hass = MagicMock()
+    shade._controller.data = {
+        "shadeId": 3,
+        "position": 50,
+        "direction": 0,
+        "event": EVT_SHADESTATE,
+    }
+    with patch.object(
+        ESPSomfyShade, "enabled", new_callable=PropertyMock, return_value=True
+    ), patch.object(ESPSomfyShade, "async_write_ha_state") as write:
+        shade._handle_coordinator_update()
+    assert write.call_count == 1
+
+
+def test_shade_state_with_no_change_writes_nothing() -> None:
+    """A shadeState that changes nothing must not write state at all."""
+    shade = _shade(position=40)
+    shade.hass = MagicMock()
+    shade._controller.data = {"shadeId": 3, "position": 40, "event": EVT_SHADESTATE}
+    with patch.object(
+        ESPSomfyShade, "enabled", new_callable=PropertyMock, return_value=True
+    ), patch.object(ESPSomfyShade, "async_write_ha_state") as write:
+        shade._handle_coordinator_update()
+    assert write.call_count == 0
 
 
 def test_shade_state_is_decoded() -> None:
