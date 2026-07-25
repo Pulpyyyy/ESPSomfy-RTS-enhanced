@@ -650,9 +650,16 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
                 self.async_write_ha_state()
         elif self._controller.data.get("shadeId") == self._shade_id:
             if evt == EVT_SHADESTATE:
+                # _handle_state_update() already calls async_write_ha_state(), and only when
+                # something actually changed. The unconditional write that used to run below
+                # doubled every position step into two state_changed events; worse, with an
+                # attribute-injecting helper (e.g. cover_extender) each write drops then re-adds
+                # the injected attributes (entity_picture, ...), so one step fanned out to four
+                # events and flickered entity_picture. Shade state must not write again here.
                 self._handle_state_update(self._controller.data)
             elif evt == EVT_SHADEREMOVED:
                 self._attr_available = False
+                self.async_write_ha_state()
             elif evt == EVT_SHADECOMMAND:
                 if "remoteAddress" in self._controller.data:
                     self._state_attributes["remote_address"] = self._controller.data[
@@ -682,7 +689,7 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
                     "timestamp": self._state_attributes.get("cmd_fired"),
                 }
                 self.hass.bus.async_fire("espsomfy-rts_event", bus_data)
-            self.async_write_ha_state()
+                self.async_write_ha_state()
 
     @property
     def available(self) -> bool:
