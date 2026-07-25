@@ -78,5 +78,196 @@
         "description": "Provide the configured security options for your device"
       }
     }
+  },
+  "entity": {
+    "button": {
+      "reboot": {
+        "name": "Restart"
+      },
+      "backup": {
+        "name": "Backup"
+      }
+    },
+    "update": {
+      "firmware": {
+        "name": "Firmware"
+      }
+    },
+    "binary_sensor": {
+      "sun_sensor": {
+        "name": "Sunlight"
+      },
+      "wind_sensor": {
+        "name": "Wind"
+      }
+    },
+    "sensor": {
+      "host_name": {
+        "name": "Hostname"
+      },
+      "chip_model": {
+        "name": "Chip type"
+      },
+      "conn_type": {
+        "name": "Connection"
+      },
+      "wifi_sensor": {
+        "name": "Wi-Fi signal strength"
+      },
+      "wifi_ssid": {
+        "name": "Wi-Fi SSID"
+      },
+      "wifi_channel": {
+        "name": "Wi-Fi channel"
+      },
+      "eth_speed": {
+        "name": "Connection speed"
+      },
+      "eth_full_duplex": {
+        "name": "Full Duplex"
+      },
+      "free_memory": {
+        "name": "Free memory"
+      },
+      "max_memory": {
+        "name": "Maximum memory"
+      },
+      "min_memory": {
+        "name": "Minimum memory"
+      },
+      "ip_address": {
+        "name": "IP address"
+      }
+    },
+    "switch": {
+      "sun_mode_switch": {
+        "name": "Sun sensor"
+      },
+      "dry_contact_switch": {
+        "name": "Dry contact"
+      }
+    }
+  },
+  "services": {
+    "open_shade": {
+      "name": "Open shade",
+      "description": "Opens the shade completely"
+    },
+    "close_shade": {
+      "name": "Close shade",
+      "description": "Closes the shade completely"
+    },
+    "stop_shade": {
+      "name": "Stop shade",
+      "description": "Stops the shade at its current position"
+    },
+    "set_shade_position": {
+      "name": "Set position",
+      "description": "Sets the shade opening position in percentage",
+      "fields": {
+        "position": {
+          "name": "Position",
+          "description": "The target position of the shade"
+        }
+      }
+    },
+    "tilt_open": {
+      "name": "Open tilt",
+      "description": "Tilts the slats to the open position"
+    },
+    "tilt_close": {
+      "name": "Close tilt",
+      "description": "Tilts the slats to the closed position"
+    },
+    "set_tilt_position": {
+      "name": "Set tilt position",
+      "description": "Sets the tilt position of the slats in percentage",
+      "fields": {
+        "tilt_position": {
+          "name": "Tilt position",
+          "description": "The target tilt of the slats"
+        }
+      }
+    },
+    "set_current_position": {
+      "name": "Force current position",
+      "description": "Sets the current position in HA without operating the motor",
+      "fields": {
+        "position": {
+          "name": "Position",
+          "description": "The position value to save"
+        }
+      }
+    },
+    "set_current_tilt_position": {
+      "name": "Force current tilt position",
+      "description": "Sets the current tilt position in HA without operating the motor",
+      "fields": {
+        "tilt_position": {
+          "name": "Tilt position",
+          "description": "The tilt value to save"
+        }
+      }
+    },
+    "set_sunny": {
+      "name": "Set sunlight status",
+      "description": "Sends a command to the motor indicating whether it is sunny or not",
+      "fields": {
+        "sunny": {
+          "name": "Sunny",
+          "description": "Check if it is sunny"
+        }
+      }
+    },
+    "set_windy": {
+      "name": "Set wind status",
+      "description": "Sends a command to the motor indicating whether it is windy or not",
+      "fields": {
+        "windy": {
+          "name": "Windy",
+          "description": "Check if it is windy"
+        }
+      }
+    },
+    "send_command": {
+      "name": "Send RTS command",
+      "description": "Sends any raw command using the RTS protocol",
+      "fields": {
+        "command": {
+          "name": "Command",
+          "description": "The RTS command to send"
+        },
+        "repeat": {
+          "name": "Repeat",
+          "description": "Number of times the command will be repeated"
+        }
+      }
+    },
+    "send_step_command": {
+      "name": "Send step command",
+      "description": "Sends a step-by-step movement command",
+      "fields": {
+        "direction": {
+          "name": "Direction",
+          "description": "The direction of the step (Up / Down)"
+        },
+        "step_size": {
+          "name": "Step size",
+          "description": "The size of the step (127 being the maximum)"
+        },
+        "repeat": {
+          "name": "Repeat",
+          "description": "Number of times the command will be repeated"
+        }
+      }
+    },
+    "reboot": {
+      "name": "Restart",
+      "description": "Triggers a restart of the ESPSomfy-RTS device"
+    },
+    "backup": {
+      "name": "Backup",
+      "description": "Triggers a backup of the ESPSomfy-RTS device configuration"
+    }
   }
 }
