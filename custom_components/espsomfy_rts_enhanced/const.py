@@ -2,7 +2,7 @@
 
 from homeassistant.const import Platform
 
-VERSION = "v3.1.0"
+VERSION = "v3.3.1"
 DOMAIN = "espsomfy_rts_enhanced"
 MANUFACTURER = "Pulpyyyy"
 API_SHADES = "/shades"

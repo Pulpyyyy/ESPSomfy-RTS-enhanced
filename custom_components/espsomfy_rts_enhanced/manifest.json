@@ -14,7 +14,7 @@
       "deviceType": "urn:schemas-pulpyyyy-org:device:Somfy:1"
     }
   ],
-  "version": "3.3.0",
+  "version": "3.3.1",
   "zeroconf": [
     {
       "type": "_espsomfy_rts._tcp.local.",
