@@ -24,6 +24,7 @@ from homeassistant.helpers import (
     entity_platform as ep,
     entity_registry as er,
 )
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
@@ -71,6 +72,38 @@ ATTR_STEP_SIZE = "step_size"
 ATTR_COMMAND = "command"
 ATTR_DIRECTION = "direction"
 ATTR_REPEAT = "repeat"
+
+# ── External attributes contract ─────────────────────────────────────────────
+# A neutral, cross-integration contract letting another integration (e.g.
+# cover_extender) make THIS entity carry a few extra state attributes itself,
+# instead of overwriting the entity's state from the outside on every change
+# (which caused a ping-pong of state_changed events and flickering attributes).
+#
+# The namespace is owned by neither side:
+#   hass.data["cover_external_attrs"] = {
+#       "readers":  set[str]                # entity_ids able to read "injected"
+#       "injected": dict[entity_id, dict]   # extras to merge into the entity
+#   }
+# ESPSomfy declares itself a reader; the other integration deposits the extras
+# and fires EXTERNAL_ATTRS_SIGNAL so the entity rewrites itself. Everything is a
+# soft read — with no contract present, the shade behaves exactly as before.
+EXTERNAL_ATTRS_DATA: Final = "cover_external_attrs"
+EXTERNAL_ATTRS_SIGNAL: Final = "cover_external_attrs_updated"
+
+
+def _external_attrs_store(hass: HomeAssistant) -> dict[str, Any]:
+    """Return the shared external-attrs store, creating it if missing.
+
+    Defensive and self-contained: it does not depend on the other integration
+    being installed, so ESPSomfy stays fully autonomous when it runs alone.
+    """
+    store = hass.data.get(EXTERNAL_ATTRS_DATA)
+    if not isinstance(store, dict):
+        store = {}
+        hass.data[EXTERNAL_ATTRS_DATA] = store
+    store.setdefault("readers", set())
+    store.setdefault("injected", {})
+    return store
 
 ALLOWED_COMMAND = [
     "Up",
@@ -516,6 +549,36 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
             self.update_supported_features()
         # print(f"Set up shade {self._attr_unique_id} - {self._attr_name}")
 
+    async def async_added_to_hass(self) -> None:
+        """Register with the external-attrs contract and subscribe to updates."""
+        await super().async_added_to_hass()
+        store = _external_attrs_store(self.hass)
+        store["readers"].add(self.entity_id)
+        # Rewrite our state whenever the depositing integration signals that the
+        # extras carried for THIS entity changed.
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass, EXTERNAL_ATTRS_SIGNAL, self._external_attrs_updated
+            )
+        )
+        # Drop ourselves from the contract when the entity goes away.
+        self.async_on_remove(self._external_attrs_cleanup)
+
+    @callback
+    def _external_attrs_updated(self, entity_id: str) -> None:
+        """Rewrite state when the extras deposited for this entity changed."""
+        if entity_id == self.entity_id:
+            self.async_write_ha_state()
+
+    @callback
+    def _external_attrs_cleanup(self) -> None:
+        """Remove this entity from the external-attrs contract on removal."""
+        store = self.hass.data.get(EXTERNAL_ATTRS_DATA)
+        if not isinstance(store, dict):
+            return
+        store.get("readers", set()).discard(self.entity_id)
+        store.get("injected", {}).pop(self.entity_id, None)
+
     def _handle_state_update(self, data) -> None:
         """Handle the state update."""
         upd = False
@@ -800,8 +863,22 @@ class ESPSomfyShade(ESPSomfyEntity, CoverEntity):
 
     @property
     def extra_state_attributes(self) -> Mapping[str, Any] | None:
-        """Return entity specific state attributes."""
-        return self._state_attributes
+        """Return entity specific state attributes.
+
+        Soft-merges any extras deposited under the external-attrs contract for
+        this entity. When no contract is present the shade is fully autonomous
+        and only its own attributes are returned (the previous behaviour).
+        """
+        if self.hass is None:
+            return self._state_attributes
+        injected = (
+            self.hass.data.get(EXTERNAL_ATTRS_DATA, {})
+            .get("injected", {})
+            .get(self.entity_id, {})
+        )
+        if not injected:
+            return self._state_attributes
+        return {**self._state_attributes, **injected}
 
     @property
     def is_toggle(self) -> bool:
