@@ -46,6 +46,9 @@ class ESPSomfyEntity(CoordinatorEntity[ESPSomfyController], Entity):
                 manufacturer=MANUFACTURER,
                 model="ESPSomfy-RTS Device",
                 via_device=(DOMAIN, self.controller.unique_id),
+                # Firmware room as the initial HA area: only honoured when the
+                # device is first registered, HA owns the assignment afterwards.
+                suggested_area=self.controller.room_name(self._data.get("roomId")),
             )
 
         # 🟢 Cas 3 (Par défaut) : L'entité est liée à la passerelle/hub globale

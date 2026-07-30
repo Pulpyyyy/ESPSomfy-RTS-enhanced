@@ -573,6 +573,16 @@ class ESPSomfyAPI:
             return False
         return True
 
+    def room_name(self, room_id) -> str | None:
+        """Name of a firmware room, or None when unassigned or unknown."""
+        if not room_id:
+            return None
+        for room in self._config.get("rooms", []):
+            if room.get("roomId") == room_id:
+                name = (room.get("name") or "").strip()
+                return name or None
+        return None
+
     def apply_data(self, data) -> None:
         """Apply the returned data to the configuration."""
         if "serverId" not in data or "model" not in data:
