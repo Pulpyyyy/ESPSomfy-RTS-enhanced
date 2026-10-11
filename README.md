@@ -67,6 +67,8 @@ Once installed and Home Assistant is restarted, the integration will **automatic
 * **State Synchronization**: The integration tracks the real-time position of the cover, even if it is operated by a physical Somfy Telis remote or via the ESP32 web interface.
 * **Simplified Updates**: You will receive a notification whenever a new version of the integration is available. Additionally, since v2.2.1 of the ESPSomfy RTS firmware, a dedicated `update` entity allows you to update your ESP32 firmware directly from the Home Assistant UI.
 * **Automations**: All shades are exposed as standard `cover` entities, ready to be added to your dashboards and used in automations via native services.
+* **Device health**: a *Connectivity* diagnostic sensor per device is `on` while the websocket is connected and the HTTP API answers (checked every minute), so automations can be conditioned on the device being reachable without an external Ping entry.
+* **Backups**: the *Backup* button (or the `espsomfy_rts_enhanced.backup` service) stores the device configuration on the Home Assistant host. A failed backup raises an error visible in automation traces, the *Last backup* sensor shows when the newest one was taken, and the number of backups kept (5 by default, 1 to 50) is set in the integration options. See [Services](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/blob/main/docs/Services.md#backup).
 
 
 <img width="1006" height="470" alt="Capture d&#39;écran_20260527_113106" src="https://github.com/user-attachments/assets/46870a36-816e-406b-bb55-51aa91e7f178" />

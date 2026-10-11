@@ -72,10 +72,14 @@
           "host": "Host address for the ESPSomfy-RTS device",
           "username": "Username",
           "password": "Password",
-          "pin": "PIN Code"
+          "pin": "PIN Code",
+          "max_backups": "Number of backups to keep"
         },
         "title": "Configure ESPSomfy-RTS",
-        "description": "Set up the security options configured for your device"
+        "description": "Set up the security options configured for your device",
+        "data_description": {
+          "max_backups": "Older backup files of this device are deleted beyond this number (1 to 50)"
+        }
       }
     }
   },
@@ -99,6 +103,9 @@
       },
       "wind_sensor": {
         "name": "Wind"
+      },
+      "connectivity": {
+        "name": "Connectivity"
       }
     },
     "sensor": {
@@ -137,6 +144,9 @@
       },
       "ip_address": {
         "name": "IP address"
+      },
+      "last_backup": {
+        "name": "Last backup"
       }
     },
     "switch": {
@@ -268,6 +278,11 @@
     "backup": {
       "name": "Backup",
       "description": "Triggers a backup of the ESPSomfy-RTS device configuration. The file holds the WiFi passphrase in clear text, it is stored owner-only in the Home Assistant configuration directory"
+    }
+  },
+  "exceptions": {
+    "backup_failed": {
+      "message": "Backup of {name} failed: the device is unreachable or did not return its configuration"
     }
   }
 }

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from datetime import datetime
+import glob
 import json
 import logging
 import os
@@ -32,17 +33,22 @@ from .const import (
     API_GROUPCOMMAND,
     API_GROUPS,
     API_LOGIN,
+    API_ROOMS,
     API_SETPOSITIONS,
     API_SETSENSOR,
     API_SHADECOMMAND,
     API_SHADES,
     API_TILTCOMMAND,
+    CONF_MAX_BACKUPS,
+    DEFAULT_MAX_BACKUPS,
     DOMAIN,
+    EVT_BACKUPDONE,
     EVT_CONNECTED,
     EVT_ETHERNET,
     EVT_FWSTATUS,
     EVT_GROUPREMOVED,
     EVT_GROUPSTATE,
+    EVT_HTTPPROBE,
     EVT_MEMSTATUS,
     EVT_SHADEADDED,
     EVT_SHADECOMMAND,
@@ -56,6 +62,11 @@ _LOGGER = logging.getLogger(__name__)
 
 WS_HEARTBEAT = 20
 WS_RECONNECT_MAX_DELAY = 20
+
+# The websocket alone can look healthy while the HTTP API, which every command
+# and the backup go through, no longer answers. A light GET checks it.
+PROBE_INTERVAL = 60
+PROBE_TIMEOUT = 5
 
 # The backup holds the WiFi passphrase in clear text, the device needs it to
 # restore itself, so both the directory and the files stay owner readable only.
@@ -75,6 +86,18 @@ def _prepare_backup_dir(path: str) -> None:
 def _open_private(path: str, flags: int) -> int:
     """Open a backup file with owner-only permissions."""
     return os.open(path, flags, BACKUP_FILE_MODE)
+
+
+def _scan_backups(backup_dir: str) -> tuple[datetime | None, int]:
+    """Return the mtime of the newest backup and the number of backups.
+
+    Blocking, run in the executor.
+    """
+    files = glob.glob(os.path.join(backup_dir, "*.backup"))
+    if not files:
+        return None, 0
+    newest = max(os.path.getmtime(file_path) for file_path in files)
+    return dt_util.utc_from_timestamp(newest), len(files)
 
 
 class SocketListener:
@@ -208,6 +231,32 @@ class ESPSomfyController(DataUpdateCoordinator):
         self.config_entry_id = config_entry.entry_id
         self.api = api
         self.ws_listener = None
+        # Connectivity is the websocket AND the last HTTP probe. ws_connected
+        # stays None until the socket reports its first outcome, so a fresh
+        # start is not logged as a recovery.
+        self.ws_connected: bool | None = None
+        self.ws_reconnects = 0
+        self.http_ok = True
+        self.last_probe_ok: datetime | None = None
+        self._connectivity: bool | None = None
+        self._ws_opened = False
+        self._probe_task: asyncio.Task | None = None
+        self._probe_now = asyncio.Event()
+        # Newest local backup, refreshed from disk at setup and after a backup.
+        self.last_backup: datetime | None = None
+        self.backup_count = 0
+
+    @property
+    def connectivity(self) -> bool | None:
+        """Whether the device is reachable, None until the first verdict."""
+        return self._connectivity
+
+    @property
+    def max_backups(self) -> int:
+        """Number of local backups to keep, from the entry options."""
+        return int(
+            self.config_entry.options.get(CONF_MAX_BACKUPS, DEFAULT_MAX_BACKUPS)
+        )
 
     @property
     def device_name(self) -> str:
@@ -289,6 +338,74 @@ class ESPSomfyController(DataUpdateCoordinator):
         )
         await self.ws_listener.connect()
 
+    def start_probe(self) -> None:
+        """Start probing the HTTP API in the background.
+
+        The task belongs to the config entry, which cancels it on unload
+        whatever the websocket is doing at that moment.
+        """
+        # Setup has just talked to /discovery, the API is known to answer.
+        self.last_probe_ok = dt_util.utcnow()
+        self._probe_task = self.config_entry.async_create_background_task(
+            self.hass, self._probe_loop(), f"espsomfy_rts_probe_{self.server_id}"
+        )
+
+    async def async_stop_probe(self) -> None:
+        """Stop the HTTP probe and wait for it to finish."""
+        if self._probe_task is not None:
+            self._probe_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._probe_task
+            self._probe_task = None
+
+    async def _probe_loop(self) -> None:
+        """Probe every PROBE_INTERVAL, or sooner when asked to."""
+        while True:
+            with contextlib.suppress(TimeoutError):
+                async with asyncio.timeout(PROBE_INTERVAL):
+                    await self._probe_now.wait()
+            self._probe_now.clear()
+            await self.async_probe()
+
+    async def async_probe(self) -> bool:
+        """Probe the HTTP API once and publish the result."""
+        ok = await self.api.probe()
+        if ok:
+            self.last_probe_ok = dt_util.utcnow()
+        self.http_ok = ok
+        self._update_connectivity()
+        self.async_set_updated_data(data={"event": EVT_HTTPPROBE, "ok": ok})
+        return ok
+
+    def _update_connectivity(self) -> None:
+        """Recompute the connectivity and log its transitions only."""
+        if self.ws_connected is None:
+            return
+        online = self.ws_connected and self.http_ok
+        previous = self._connectivity
+        self._connectivity = online
+        if previous is None or previous == online:
+            return
+        if online:
+            _LOGGER.info("ESPSomfy-RTS %s is reachable again", self.device_name)
+        else:
+            _LOGGER.warning(
+                "ESPSomfy-RTS %s is unreachable (websocket %s, HTTP API %s)",
+                self.device_name,
+                "up" if self.ws_connected else "down",
+                "up" if self.http_ok else "down",
+            )
+
+    async def async_update_backup_info(self) -> None:
+        """Read the newest local backup from disk and publish it."""
+        try:
+            self.last_backup, self.backup_count = await self.hass.async_add_executor_job(
+                _scan_backups, self.api.backup_dir
+            )
+        except OSError as ex:
+            _LOGGER.warning("Could not read the backup directory: %s", ex)
+        self.async_set_updated_data(data={"event": EVT_BACKUPDONE})
+
     async def create_backup(self) -> bool:
         """Create a backup of the configuration and stores it in HA."""
         return await self.api.create_backup()
@@ -326,6 +443,15 @@ class ESPSomfyController(DataUpdateCoordinator):
     def ws_onopen(self):
         """Websocket is opened."""
         _LOGGER.debug("ESPSomfy-RTS Socket was opened")
+        if self._ws_opened:
+            self.ws_reconnects += 1
+        self._ws_opened = True
+        self.ws_connected = True
+        # Coming back from an outage: check the API now rather than waiting
+        # up to PROBE_INTERVAL to report the device as reachable again.
+        if not self.http_ok:
+            self._probe_now.set()
+        self._update_connectivity()
         if self.api.is_configured:
             _LOGGER.debug("ESPSomfy-RTS Already Configured")
             data = {"event": EVT_CONNECTED, "connected": True}
@@ -333,11 +459,15 @@ class ESPSomfyController(DataUpdateCoordinator):
 
     def ws_onerror(self, exception):
         """Error on the socket connection."""
+        self.ws_connected = False
+        self._update_connectivity()
         data = {"event": EVT_CONNECTED, "connected": False}
         self.async_set_updated_data(data=data)
 
     def ws_onclose(self):
         """Socket closed."""
+        self.ws_connected = False
+        self._update_connectivity()
         data = {"event": EVT_CONNECTED, "connected": False}
         self.async_set_updated_data(data=data)
 
@@ -362,6 +492,9 @@ class ESPSomfyAPI:
         self._can_update = False
         self._config_entry_id = config_entry_id
         self._configured = False
+        # /rooms is small and has no side effect, unlike /discovery which also
+        # makes the firmware broadcast its whole network state on the socket.
+        self._probe_path = API_ROOMS
 
     @property
     def shades(self) -> Any:
@@ -526,6 +659,27 @@ class ESPSomfyAPI:
             # with the address and we should not use it.
             pass
         return False
+
+    async def probe(self) -> bool:
+        """Check that the HTTP API answers, with a short timeout."""
+        url = f"{self._api_url}{self._probe_path}"
+        try:
+            async with self._session.get(
+                url,
+                headers=self._headers,
+                timeout=aiohttp.ClientTimeout(total=PROBE_TIMEOUT),
+            ) as resp:
+                status = resp.status
+        except (aiohttp.ClientError, OSError, TimeoutError) as ex:
+            _LOGGER.debug("ESPSomfy-RTS probe of %s failed: %s", url, ex)
+            return False
+        if status == 404 and self._probe_path != API_DISCOVERY:
+            # Older firmware without /rooms: /discovery is always there.
+            self._probe_path = API_DISCOVERY
+            return await self.probe()
+        if status != 200:
+            _LOGGER.debug("ESPSomfy-RTS probe of %s answered %s", url, status)
+        return status == 200
 
     async def update_firmware(self, version) -> bool:
         "Update to the latest firmware version."

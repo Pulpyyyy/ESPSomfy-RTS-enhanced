@@ -70,6 +70,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ESPSomfyConfigEntry) -> 
     #    avec une liste vide et tous les volets reviendraient "unavailable".
     await api.load_shades()
     await api.load_groups()
+    # Newest local backup for the "Last backup" sensor, read before the
+    # platforms so the entity starts with its value.
+    await controller.async_update_backup_info()
 
     # 4. Les plateformes ne sont chargées qu'une fois le login réussi, sinon un
     #    échec après forward provoquait un double chargement au retry.
@@ -87,6 +90,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ESPSomfyConfigEntry) -> 
 
     # 4. On lance la connexion WebSocket
     await controller.ws_connect()
+    # 5. HTTP reachability probe, independent from the websocket reconnects.
+    controller.start_probe()
 
     return True
 
@@ -115,6 +120,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ESPSomfyConfigEntry) ->
     """Unload a config entry."""
     controller: ESPSomfyController | None = getattr(entry, "runtime_data", None)
     if controller is not None:
+        await controller.async_stop_probe()
         await controller.ws_close()
         return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     return True

@@ -21,7 +21,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.util.network import is_host_valid
 
-from .const import DOMAIN
+from .const import CONF_MAX_BACKUPS, DEFAULT_MAX_BACKUPS, DOMAIN, MAX_BACKUPS, MIN_BACKUPS
 from .controller import (
     DiscoveryError,
     ESPSomfyAPI,
@@ -230,25 +230,33 @@ class ESPSomfyOptionsFlowHandler(config_entries.OptionsFlow):
         """Configure options for espsomfy_rts_enhanced."""
         errors = {}
         if user_input is not None:
+            # The connection settings live in the entry data, the backup
+            # retention is a true option.
+            data = {k: v for k, v in user_input.items() if k != CONF_MAX_BACKUPS}
+            options = {
+                CONF_MAX_BACKUPS: user_input.get(
+                    CONF_MAX_BACKUPS, self._max_backups()
+                )
+            }
             try:
-                if not is_host_valid(user_input[CONF_HOST]):
+                if not is_host_valid(data[CONF_HOST]):
                     raise InvalidHost
-                api = ESPSomfyAPI(self.hass, 0, user_input)
+                api = ESPSomfyAPI(self.hass, 0, data)
                 await api.discover()
                 await api.login(
                     {
-                        "username": user_input.get(CONF_USERNAME, ""),
-                        "password": user_input.get(CONF_PASSWORD, ""),
-                        "pin": user_input.get(CONF_PIN, ""),
+                        "username": data.get(CONF_USERNAME, ""),
+                        "password": data.get(CONF_PASSWORD, ""),
+                        "pin": data.get(CONF_PIN, ""),
                     }
                 )
                 # Update config entry with data from user input
                 self.hass.config_entries.async_update_entry(
-                    self._config_entry, title=api.deviceName, data=user_input
+                    self._config_entry, title=api.deviceName, data=data
                 )
                 return self.async_create_entry(
                     title=api.deviceName,
-                    data=user_input,
+                    data=options,
                 )
             except InvalidHost:
                 errors[CONF_HOST] = "invalid_host"
@@ -266,8 +274,22 @@ class ESPSomfyOptionsFlowHandler(config_entries.OptionsFlow):
             step_id="init",
             data_schema=_get_data_schema(
                 self.hass, data=self._config_entry.data, host=self._host
+            ).extend(
+                {
+                    vol.Optional(
+                        CONF_MAX_BACKUPS, default=self._max_backups()
+                    ): vol.All(
+                        vol.Coerce(int), vol.Range(min=MIN_BACKUPS, max=MAX_BACKUPS)
+                    ),
+                }
             ),
             errors=errors,
+        )
+
+    def _max_backups(self) -> int:
+        """Current retention, the default for entries created before the option."""
+        return int(
+            self._config_entry.options.get(CONF_MAX_BACKUPS, DEFAULT_MAX_BACKUPS)
         )
 
 

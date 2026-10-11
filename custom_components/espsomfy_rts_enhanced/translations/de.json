@@ -72,10 +72,14 @@
           "host": "Host-Adresse für das ESPSomfy-RTS-Gerät",
           "username": "Benutzername",
           "password": "Passwort",
-          "pin": "PIN-Code"
+          "pin": "PIN-Code",
+          "max_backups": "Anzahl aufzubewahrender Sicherungen"
         },
         "title": "ESPSomfy-RTS konfigurieren",
-        "description": "Einrichtung der für Ihr Gerät konfigurierten Sicherheitsoptionen"
+        "description": "Einrichtung der für Ihr Gerät konfigurierten Sicherheitsoptionen",
+        "data_description": {
+          "max_backups": "Ältere Sicherungsdateien dieses Geräts werden über diese Anzahl hinaus gelöscht (1 bis 50)"
+        }
       }
     }
   },
@@ -99,6 +103,9 @@
       },
       "wind_sensor": {
         "name": "Wind"
+      },
+      "connectivity": {
+        "name": "Konnektivität"
       }
     },
     "sensor": {
@@ -137,6 +144,9 @@
       },
       "ip_address": {
         "name": "IP-Adresse"
+      },
+      "last_backup": {
+        "name": "Letzte Sicherung"
       }
     },
     "switch": {
@@ -268,6 +278,11 @@
     "backup": {
       "name": "Sicherung erstellen",
       "description": "Löst eine Sicherung der ESPSomfy-RTS-Gerätekonfiguration aus. Die Datei enthält das WLAN-Passwort im Klartext und wird nur für den Eigentümer lesbar im Konfigurationsverzeichnis von Home Assistant abgelegt"
+    }
+  },
+  "exceptions": {
+    "backup_failed": {
+      "message": "Sicherung von {name} fehlgeschlagen: Das Gerät ist nicht erreichbar oder hat seine Konfiguration nicht geliefert"
     }
   }
 }

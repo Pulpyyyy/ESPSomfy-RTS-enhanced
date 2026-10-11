@@ -64,6 +64,8 @@ Une fois installée et Home Assistant redémarré, l'intégration **détectera a
 * **Synchronisation d'état** : L'intégration suit en temps réel la position réelle du volet, même si celui-ci est actionné par une télécommande physique Somfy Telis ou via l'interface web de l'ESP32.
 * **Mises à jour simplifiées** : Vous recevez une notification dès qu'une nouvelle version de l'intégration est disponible. De plus, depuis la v2.2.1 du firmware ESPSomfy RTS, une entité `update` dédiée vous permet de mettre à jour le micrologiciel de vos ESP32 directement depuis l'interface de Home Assistant.
 * **Automatisations** : Tous les volets sont exposés comme des entités `cover` classiques, prêtes à être intégrées à vos tableaux de bord et à vos automatisations via les services natifs.
+* **Santé du boîtier** : un capteur de diagnostic *Connectivité* par boîtier est `on` tant que le websocket est connecté et que l'API HTTP répond (vérifiée chaque minute). Une automatisation peut donc être conditionnée à la joignabilité du boîtier sans entrée Ping externe.
+* **Backups** : le bouton *Sauvegarder* (ou le service `espsomfy_rts_enhanced.backup`) enregistre la configuration du boîtier sur l'hôte Home Assistant. Un backup raté lève une erreur visible dans la trace de l'automatisation, le capteur *Dernier backup* indique la date du plus récent, et le nombre de backups conservés (5 par défaut, de 1 à 50) se règle dans les options de l'intégration. Voir [Services](https://github.com/Pulpyyyy/ESPSomfy-RTS-enhanced/blob/main/docs/Services.md#backup).
 
 <img width="1006" height="470" alt="Capture d&#39;écran_20260527_113106" src="https://github.com/user-attachments/assets/46870a36-816e-406b-bb55-51aa91e7f178" />
 

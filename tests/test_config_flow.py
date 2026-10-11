@@ -7,13 +7,20 @@ from unittest.mock import patch
 
 import aiohttp
 import pytest
+import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.espsomfy_rts_enhanced.const import DOMAIN
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.espsomfy_rts_enhanced.const import (
+    CONF_MAX_BACKUPS,
+    DEFAULT_MAX_BACKUPS,
+    DOMAIN,
+)
 
 from .conftest import DISCOVERY_PAYLOAD, DISCOVERY_URL, HOST, LOGIN_URL, SERVER_ID
 
@@ -104,3 +111,67 @@ async def test_user_flow_reports_a_truncated_discovery(
 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {CONF_HOST: "discovery_error"}
+
+
+def _options_entry(hass: HomeAssistant, options: dict | None = None) -> MockConfigEntry:
+    """An entry as the user flow stores it, options left empty by default."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_HOST: HOST},
+        options=options or {},
+        unique_id=f"espsomfy_{SERVER_ID}",
+    )
+    entry.add_to_hass(hass)
+    return entry
+
+
+def _default(result, key: str):
+    """Default the form shows for a field."""
+    for marker in result["data_schema"].schema:
+        if marker == key:
+            return marker.default()
+    raise AssertionError(f"{key} not in the form")
+
+
+async def test_options_flow_stores_the_backup_retention(
+    hass: HomeAssistant, aioclient_mock
+) -> None:
+    """The retention is an option, the connection settings stay in the data."""
+    aioclient_mock.get(DISCOVERY_URL, json=DISCOVERY_PAYLOAD)
+    aioclient_mock.put(LOGIN_URL, json={"success": True, "apiKey": "0123456789"})
+    entry = _options_entry(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    # An entry created before the option existed shows the former value.
+    assert _default(result, CONF_MAX_BACKUPS) == DEFAULT_MAX_BACKUPS == 5
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_HOST: HOST, CONF_MAX_BACKUPS: 12}
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options == {CONF_MAX_BACKUPS: 12}
+    assert entry.data == {CONF_HOST: HOST}
+
+
+async def test_options_flow_shows_the_current_retention(hass: HomeAssistant) -> None:
+    """A saved retention is the default of the next edit."""
+    entry = _options_entry(hass, {CONF_MAX_BACKUPS: 20})
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert _default(result, CONF_MAX_BACKUPS) == 20
+
+
+@pytest.mark.parametrize("value", [0, 51])
+async def test_options_flow_rejects_an_out_of_range_retention(
+    hass: HomeAssistant, value: int
+) -> None:
+    """Between 1 and 50 backups."""
+    entry = _options_entry(hass)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    with pytest.raises(vol.Invalid):
+        await hass.config_entries.options.async_configure(
+            result["flow_id"], {CONF_HOST: HOST, CONF_MAX_BACKUPS: value}
+        )
+    assert entry.options == {}
