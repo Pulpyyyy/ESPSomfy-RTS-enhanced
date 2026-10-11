@@ -17,30 +17,29 @@ from homeassistant.components.button import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import ESPSomfyRTSEntityFeature
-from .const import API_REBOOT, EVT_CONNECTED
+from .const import API_REBOOT, DOMAIN, EVT_CONNECTED
 from .controller import ESPSomfyController
 from .entity import ESPSomfyEntity
 
 SVC_REBOOT = "reboot"
 SVC_BACKUP = "backup"
 
-MAX_BACKUPS = 5
-
 _LOGGER = logging.getLogger(__name__)
 
 
-def _rotate_backups(backup_dir: str) -> None:
-    """Keep only the most recent MAX_BACKUPS files (blocking, run in executor)."""
+def _rotate_backups(backup_dir: str, keep: int) -> None:
+    """Keep only the most recent `keep` files (blocking, run in executor)."""
     if not os.path.exists(backup_dir):
         return
     files = glob.glob(os.path.join(backup_dir, "*.backup"))
     files.sort(key=os.path.getmtime, reverse=True)
-    for file_path in files[MAX_BACKUPS:]:
+    for file_path in files[keep:]:
         os.remove(file_path)
 
 
@@ -147,27 +146,51 @@ class ESPSomfyButton(ESPSomfyEntity, ButtonEntity):
         data = None
         if "data" in self._action:
             data = self._action["data"]
+        is_backup = self.entity_description.key == "backup"
 
-        # 1. Run the requested action (reboot or backup)
+        # 1. A backup of a device known to be offline fails right away, with
+        # no request: the caller (an automation) must see it fail.
+        if is_backup and self._controller.connectivity is False:
+            raise self._backup_failed()
+
+        # 2. Run the requested action (reboot or backup)
         if "service" in self._action:
             await self._controller.api.put_command(self._action["service"], data)
         elif "apimethod" in self._action:
             method = getattr(self._controller.api, self._action["apimethod"])
-            await method()
+            # create_backup() already logged why it failed.
+            if await method() is False and is_backup:
+                raise self._backup_failed()
 
-        # 2. For the backup button, keep at most MAX_BACKUPS files. The
-        # directory comes from the API (ESPSomfyRTS_<serverId>), the very one
-        # create_backup() writes to.
-        if self.entity_description.key == "backup":
+        # 3. Only after a backup was written: keep at most the configured
+        # number of files. The directory comes from the API
+        # (ESPSomfyRTS_<serverId>), the very one create_backup() writes to.
+        if is_backup:
             try:
                 await self.hass.async_add_executor_job(
-                    _rotate_backups, self._controller.api.backup_dir
+                    _rotate_backups,
+                    self._controller.api.backup_dir,
+                    self._controller.max_backups,
                 )
             except OSError as ex:
                 _LOGGER.warning("Could not rotate backup files: %s", ex)
+            await self._controller.async_update_backup_info()
+
+    def _backup_failed(self) -> HomeAssistantError:
+        """Build the error raised when a backup could not be written."""
+        return HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="backup_failed",
+            translation_placeholders={"name": self._controller.device_name},
+        )
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
+        # The backup button stays available: Home Assistant silently skips
+        # unavailable entities in a service call, so an offline device would
+        # make the backup a no-op instead of the error async_press raises.
+        if self.entity_description.key == "backup":
+            return
         if self._controller.data.get("event", "") == EVT_CONNECTED:
             if "connected" in self._controller.data and self._attr_available != bool(
                 self._controller.data["connected"]

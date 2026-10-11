@@ -72,10 +72,14 @@
           "host": "Adresse hôte pour le dispositif ESPSomfy-RTS",
           "username": "Nom d'utilisateur",
           "password": "Mot de passe",
-          "pin": "Code PIN"
+          "pin": "Code PIN",
+          "max_backups": "Nombre de backups à conserver"
         },
         "title": "Configurer ESPSomfy-RTS",
-        "description": "Paramétrage des options de sécurité configurées pour votre dispositif"
+        "description": "Paramétrage des options de sécurité configurées pour votre dispositif",
+        "data_description": {
+          "max_backups": "Au-delà de ce nombre, les plus anciens fichiers de backup de ce boîtier sont supprimés (1 à 50)"
+        }
       }
     }
   },
@@ -99,6 +103,9 @@
       },
       "wind_sensor": {
         "name": "Vent"
+      },
+      "connectivity": {
+        "name": "Connectivité"
       }
     },
     "sensor": {
@@ -137,6 +144,9 @@
       },
       "ip_address": {
         "name": "Adresse IP"
+      },
+      "last_backup": {
+        "name": "Dernier backup"
       }
     },
     "switch": {
@@ -268,6 +278,11 @@
     "backup": {
       "name": "Sauvegarder",
       "description": "Lance une sauvegarde de la configuration du boîtier ESPSomfy-RTS. Le fichier contient la phrase secrète WiFi en clair, il est écrit en accès propriétaire seul dans le répertoire de configuration de Home Assistant"
+    }
+  },
+  "exceptions": {
+    "backup_failed": {
+      "message": "Le backup de {name} a échoué : le boîtier est injoignable ou n'a pas renvoyé sa configuration"
     }
   }
 }

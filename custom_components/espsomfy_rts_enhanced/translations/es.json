@@ -72,10 +72,14 @@
           "host": "Dirección del host para el dispositivo ESPSomfy-RTS",
           "username": "Nombre de usuario",
           "password": "Contraseña",
-          "pin": "Código PIN"
+          "pin": "Código PIN",
+          "max_backups": "Número de copias de seguridad a conservar"
         },
         "title": "Configurar ESPSomfy-RTS",
-        "description": "Configuración de las opciones de seguridad para tu dispositivo"
+        "description": "Configuración de las opciones de seguridad para tu dispositivo",
+        "data_description": {
+          "max_backups": "Por encima de este número se eliminan los archivos de copia de seguridad más antiguos de este dispositivo (1 a 50)"
+        }
       }
     }
   },
@@ -99,6 +103,9 @@
       },
       "wind_sensor": {
         "name": "Viento"
+      },
+      "connectivity": {
+        "name": "Conectividad"
       }
     },
     "sensor": {
@@ -137,6 +144,9 @@
       },
       "ip_address": {
         "name": "Dirección IP"
+      },
+      "last_backup": {
+        "name": "Última copia de seguridad"
       }
     },
     "switch": {
@@ -268,6 +278,11 @@
     "backup": {
       "name": "Copia de seguridad",
       "description": "Inicia una copia de seguridad de la configuración del dispositivo ESPSomfy-RTS. El archivo contiene la contraseña WiFi en texto plano y se guarda con permisos solo para el propietario en el directorio de configuración de Home Assistant"
+    }
+  },
+  "exceptions": {
+    "backup_failed": {
+      "message": "La copia de seguridad de {name} ha fallado: el dispositivo no es accesible o no ha devuelto su configuración"
     }
   }
 }

@@ -23,7 +23,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import EVT_CONNECTED, EVT_ETHERNET, EVT_MEMSTATUS, EVT_WIFISTRENGTH
+from .const import (
+    EVT_BACKUPDONE,
+    EVT_CONNECTED,
+    EVT_ETHERNET,
+    EVT_MEMSTATUS,
+    EVT_WIFISTRENGTH,
+)
 from .controller import ESPSomfyController
 from .entity import ESPSomfyEntity
 
@@ -255,6 +261,20 @@ async def async_setup_entry(
                 data=data,
             )
         )
+        new_entities.append(
+            ESPSomfyLastBackupSensor(
+                controller=controller,
+                cfg=ESPSomfyDiagSensorDescription(
+                    key="last_backup",
+                    translation_key="last_backup",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                    has_entity_name=True,
+                    device_class=SensorDeviceClass.TIMESTAMP,
+                    icon="mdi:backup-restore",
+                    events={EVT_BACKUPDONE: None},
+                ),
+            )
+        )
     if new_entities:
         async_add_entities(new_entities)
 
@@ -356,3 +376,38 @@ class ESPSomfyWifiStrengthSensor(ESPSomfyDiagSensor):
             data=data,
         )
         self._available = True
+
+
+class ESPSomfyLastBackupSensor(ESPSomfyEntity, SensorEntity):
+    """Time of the newest backup stored on the Home Assistant host."""
+
+    def __init__(
+        self, *, controller: ESPSomfyController, cfg: ESPSomfyDiagSensorDescription
+    ) -> None:
+        """Initialize the last backup sensor."""
+        super().__init__(data=None, controller=controller)
+        self._controller = controller
+        self.entity_description = cfg
+        self.events = cfg.events
+        self._attr_unique_id = f"{cfg.key}_{controller.unique_id}"
+        self._attr_has_entity_name = cfg.has_entity_name
+
+    @property
+    def available(self) -> bool:
+        """The backups are local files, the device being offline is irrelevant."""
+        return True
+
+    @property
+    def native_value(self) -> Any:
+        """Modification time of the newest backup file."""
+        return self._controller.last_backup
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Number of backups kept on disk."""
+        return {"backup_count": self._controller.backup_count}
+
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        if self._controller.data.get("event") in self.events:
+            self.async_write_ha_state()

@@ -45,5 +45,24 @@ Reboots the ESPSomfy RTS device.  Targets the reboot button entity of the device
 # backup
 Creates a backup of the ESPSomfy RTS device configuration and stores it on the Home Assistant host.  Targets the backup button entity of the device.
 
-**The backup file contains secrets.**  It is the very file the device restores itself from, so it holds the WiFi passphrase, the remote addresses and the rolling codes in clear text.  The integration therefore writes it with owner-only permissions (0600, in a 0700 directory) into `ESPSomfyRTS_<serverId>` inside the Home Assistant configuration directory.  That location is deliberately not `www/`, which Home Assistant serves over HTTP without authentication: never copy a backup there, and treat it like any other credential when you move it off the host.  The five most recent backups are kept, older ones are deleted on the next run.
+**The backup file contains secrets.**  It is the very file the device restores itself from, so it holds the WiFi passphrase, the remote addresses and the rolling codes in clear text.  The integration therefore writes it with owner-only permissions (0600, in a 0700 directory) into `ESPSomfyRTS_<serverId>` inside the Home Assistant configuration directory.  That location is deliberately not `www/`, which Home Assistant serves over HTTP without authentication: never copy a backup there, and treat it like any other credential when you move it off the host.  The five most recent backups are kept by default, older ones are deleted after the next successful backup.  The number is set per device with the *Number of backups to keep* option (1 to 50).
 
+The call fails with an error, which an automation trace shows as such, when the device is reported offline by its *Connectivity* sensor (no request is sent then) or when the device does not return its configuration.  Old backups are only rotated after a new one has been written.  The *Last backup* diagnostic sensor holds the time of the newest backup on disk, with the number of files kept in its `backup_count` attribute.
+
+Example: a nightly backup, only attempted when the device is reachable.
+
+```yaml
+automation:
+  - alias: Nightly ESPSomfy-RTS backup
+    triggers:
+      - trigger: time
+        at: "03:00:00"
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.espsomfyrts_connectivity
+        state: "on"
+    actions:
+      - action: espsomfy_rts_enhanced.backup
+        target:
+          entity_id: button.espsomfyrts_backup
+```

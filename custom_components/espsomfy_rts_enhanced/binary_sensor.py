@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from dataclasses import dataclass
+from typing import Any
+
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+    BinarySensorEntityDescription,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import EVT_CONNECTED, EVT_GROUPSTATE, EVT_SHADESTATE
+from .const import EVT_CONNECTED, EVT_GROUPSTATE, EVT_HTTPPROBE, EVT_SHADESTATE
 from .controller import ESPSomfyController
 from .entity import ESPSomfyEntity
 
@@ -22,6 +30,18 @@ async def async_setup_entry(
     new_entities = []
     data = controller.api.get_config()
     if "serverId" in data:
+        new_entities.append(
+            ESPSomfyConnectivitySensor(
+                controller=controller,
+                cfg=ESPSomfyBinarySensorDescription(
+                    key="connectivity",
+                    translation_key="connectivity",
+                    has_entity_name=True,
+                    device_class=BinarySensorDeviceClass.CONNECTIVITY,
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                ),
+            )
+        )
         for shade in controller.api.shades:
             try:
                 if "sunSensor" in shade:
@@ -52,6 +72,53 @@ async def async_setup_entry(
                 pass
     if new_entities:
         async_add_entities(new_entities)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ESPSomfyBinarySensorDescription(BinarySensorEntityDescription):
+    """A base class descriptor for a hub binary sensor entity."""
+
+
+class ESPSomfyConnectivitySensor(ESPSomfyEntity, BinarySensorEntity):
+    """Whether the device is reachable: websocket up and HTTP API answering."""
+
+    # Refreshed by every successful probe, not worth a history row a minute.
+    _unrecorded_attributes = frozenset({"last_probe_ok"})
+
+    def __init__(
+        self, *, controller: ESPSomfyController, cfg: ESPSomfyBinarySensorDescription
+    ) -> None:
+        """Initialize the connectivity sensor."""
+        super().__init__(data=None, controller=controller)
+        self._controller = controller
+        self.entity_description = cfg
+        self._attr_unique_id = f"{cfg.key}_{controller.unique_id}"
+        self._attr_has_entity_name = cfg.has_entity_name
+        self._attr_translation_key = cfg.translation_key
+
+    @property
+    def available(self) -> bool:
+        """Always available: the state itself carries the reachability."""
+        return True
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return True when the device is reachable."""
+        return self._controller.connectivity
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Details behind the verdict."""
+        return {
+            "last_probe_ok": self._controller.last_probe_ok,
+            "websocket_connected": bool(self._controller.ws_connected),
+            "ws_reconnects": self._controller.ws_reconnects,
+        }
+
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        if self._controller.data.get("event") in (EVT_CONNECTED, EVT_HTTPPROBE):
+            self.async_write_ha_state()
 
 
 class ESPSomfySunSensor(ESPSomfyEntity, BinarySensorEntity):

@@ -18,6 +18,7 @@ API_SHADECOMMAND = "/shadeCommand"
 API_GROUPCOMMAND = "/groupCommand"
 API_TILTCOMMAND = "/tiltCommand"
 API_DISCOVERY = "/discovery"
+API_ROOMS = "/rooms"
 API_LOGIN = "/login"
 API_SETPOSITIONS = "/setPositions"
 API_SETSENSOR = "/setSensor"
@@ -35,6 +36,15 @@ EVT_UPDPROGRESS = "updateProgress"
 EVT_WIFISTRENGTH = "wifiStrength"
 EVT_ETHERNET = "ethernet"
 EVT_MEMSTATUS = "memStatus"
+# Internal events broadcast by the controller itself, never sent by the
+# firmware (the websocket filter would drop them anyway).
+EVT_HTTPPROBE = "httpProbe"
+EVT_BACKUPDONE = "backupDone"
+
+CONF_MAX_BACKUPS = "max_backups"
+DEFAULT_MAX_BACKUPS = 5
+MIN_BACKUPS = 1
+MAX_BACKUPS = 50
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
