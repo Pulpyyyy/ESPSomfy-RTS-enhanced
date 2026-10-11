@@ -258,6 +258,10 @@ class ESPSomfyController(DataUpdateCoordinator):
             self.config_entry.options.get(CONF_MAX_BACKUPS, DEFAULT_MAX_BACKUPS)
         )
 
+    def room_name(self, room_id) -> str | None:
+        """Name of a firmware room, or None when unassigned or unknown."""
+        return self.api.room_name(room_id)
+
     @property
     def device_name(self) -> str:
         """Get the device name from the host."""
