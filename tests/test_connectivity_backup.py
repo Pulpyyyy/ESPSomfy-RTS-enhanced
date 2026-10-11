@@ -311,24 +311,26 @@ async def test_probe_falls_back_to_discovery_on_older_firmware(
     api_url = f"http://{HOST}:8081"
     api = ESPSomfyAPI(hass, "entry", {CONF_HOST: HOST})
 
-    aioclient_mock.get(f"{api_url}/rooms", json=[])
-    assert await REAL_PROBE(api) is True
+    # The fallback calls probe() again, it must reach the real one too.
+    with patch.object(ESPSomfyAPI, "probe", REAL_PROBE):
+        aioclient_mock.get(f"{api_url}/rooms", json=[])
+        assert await api.probe() is True
 
-    aioclient_mock.clear_requests()
-    aioclient_mock.get(f"{api_url}/rooms", status=404)
-    aioclient_mock.get(f"{api_url}/discovery", json=DISCOVERY_PAYLOAD)
-    assert await REAL_PROBE(api) is True
-    assert await REAL_PROBE(api) is True
-    # Once switched, /rooms is not asked again.
-    assert [str(call[1]) for call in aioclient_mock.mock_calls] == [
-        f"{api_url}/rooms",
-        f"{api_url}/discovery",
-        f"{api_url}/discovery",
-    ]
+        aioclient_mock.clear_requests()
+        aioclient_mock.get(f"{api_url}/rooms", status=404)
+        aioclient_mock.get(f"{api_url}/discovery", json=DISCOVERY_PAYLOAD)
+        assert await api.probe() is True
+        assert await api.probe() is True
+        # Once switched, /rooms is not asked again.
+        assert [str(call[1]) for call in aioclient_mock.mock_calls] == [
+            f"{api_url}/rooms",
+            f"{api_url}/discovery",
+            f"{api_url}/discovery",
+        ]
 
-    aioclient_mock.clear_requests()
-    aioclient_mock.get(f"{api_url}/discovery", exc=TimeoutError())
-    assert await REAL_PROBE(api) is False
+        aioclient_mock.clear_requests()
+        aioclient_mock.get(f"{api_url}/discovery", exc=TimeoutError())
+        assert await api.probe() is False
 
 
 # --- 3. to 6. Backups ---------------------------------------------------------
